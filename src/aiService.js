@@ -99,22 +99,39 @@ JSON 구조는 다음과 같아야 합니다:
 }
 `;
 
-    try {
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+    // 상세 정보와 이미지를 병렬로 생성하여 속도 향상
+    const imageModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+    const imagePrompt = `${recipeTitle} delicious high quality food photography, photorealistic, professional lighting`;
 
-        // JSON 파싱 (마크다운 블록 제거)
-        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const recipeDetail = JSON.parse(cleanedText);
+    const [result, imageResult] = await Promise.all([
+        model.generateContent(prompt),
+        imageModel.generateContent(imagePrompt).catch(e => {
+            console.error("Gemini image generation failed:", e);
+            return null;
+        })
+    ]);
 
-        // 실제 해당 메뉴 사진을 보여주기 위해 무료 AI 이미지 생성 서비스(pollinations.ai) 사용
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(recipeTitle + " delicious high quality food photography")}?width=800&height=600&nologo=true`;
-        recipeDetail.img = imageUrl;
+    const responseText = result.response.text();
 
-        return recipeDetail;
+    // JSON 파싱 (마크다운 블록 제거)
+    const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const recipeDetail = JSON.parse(cleanedText);
 
-    } catch (error) {
-        console.error("AI 상세 레시피 생성 실패:", error);
-        throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
+    // 이미지 데이터 매핑
+    let imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop"; // fallback
+    if (imageResult && imageResult.response && imageResult.response.candidates && imageResult.response.candidates.length > 0) {
+        const parts = imageResult.response.candidates[0].content.parts;
+        const imagePart = parts.find(p => p.inlineData);
+        if (imagePart && imagePart.inlineData) {
+            imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        }
     }
+    recipeDetail.img = imageUrl;
+
+    return recipeDetail;
+
+} catch (error) {
+    console.error("AI 상세 레시피 생성 실패:", error);
+    throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
+}
 };
