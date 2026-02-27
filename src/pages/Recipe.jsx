@@ -96,12 +96,31 @@ const Recipe = () => {
                         </h3>
                         <span className="text-[11px] text-slate-400 font-medium">내 냉장고 데이터 기반</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {recipeDetail ? recipeDetail.ingredientsUsed.map((ing, idx) => (
-                            <div key={idx} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border bg-white border-primary/30 text-primary">
-                                {ing}
-                            </div>
-                        )) : (
+                    <div className="flex flex-col gap-3">
+                        {recipeDetail ? (
+                            <>
+                                {recipeDetail.ingredientsUsed && recipeDetail.ingredientsUsed.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                        <span className="text-[11px] font-bold text-slate-500 min-w-8">재료</span>
+                                        {recipeDetail.ingredientsUsed.map((ing, idx) => (
+                                            <div key={`ing-${idx}`} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border bg-white border-primary/30 text-primary">
+                                                {ing}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {recipeDetail.saucesUsed && recipeDetail.saucesUsed.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                        <span className="text-[11px] font-bold text-slate-500 min-w-8">소스</span>
+                                        {recipeDetail.saucesUsed.map((ing, idx) => (
+                                            <div key={`sauce-${idx}`} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border bg-white border-amber-500/30 text-amber-600">
+                                                {ing}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
                             <div className="text-sm text-slate-400">재료를 불러오는 중...</div>
                         )}
                     </div>
