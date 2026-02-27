@@ -39,7 +39,7 @@ const dietModes = [
 const Home = () => {
   const navigate = useNavigate();
   const [dietMode, setDietMode] = useState('든든 한끼');
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState(initialIngredients.map(item => item.id));
   const [recommendations, setRecommendations] = useState(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
