@@ -264,12 +264,33 @@ const Recipe = () => {
                         </button>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => setIsTimerActive(true)}
-                        className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                        <span className="material-symbols-outlined">timer</span>
-                        {timeLeft < 15 * 60 && timeLeft > 0 ? '타이머 다시 시작하기' : '요리 타이머 시작 (15분)'}
-                    </button>
+                    <div className="bg-white rounded-3xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 p-4 w-full flex flex-col gap-3 transition-all">
+                        <div className="flex items-center justify-between px-2">
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">timer</span>
+                                <span className="text-sm font-bold text-slate-700">요리 타이머</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setTimeLeft(prev => Math.max(60, prev - 60))} className="size-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition-all">
+                                    <span className="material-symbols-outlined text-sm">remove</span>
+                                </button>
+                                <span className="text-xl font-bold font-mono tracking-widest text-slate-800 w-16 text-center">{formatTime(timeLeft)}</span>
+                                <button onClick={() => setTimeLeft(prev => prev + 60)} className="size-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition-all">
+                                    <span className="material-symbols-outlined text-sm">add</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => setTimeLeft(15 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">15분</button>
+                            <button onClick={() => setTimeLeft(10 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">10분</button>
+                            <button onClick={() => setTimeLeft(5 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">5분</button>
+                        </div>
+                        <button
+                            onClick={() => setIsTimerActive(true)}
+                            className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-md shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+                            시작하기
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
