@@ -96,7 +96,7 @@ export const checkInfographicStatus = async (recipeTitle) => {
             if (isCompleted && recipeTitle.includes('김치찌개')) {
                 resolve({
                     completed: true,
-                    url: 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzEAqOtRiQRUNebKCXPj3q7DE4XHQO3pFbGYyI4rFBwMC3W6aDDgHNPulS733V7qqvLEfTa2U9w7U3qpjZZUsoGeP_a_tbmRRI2G-fOw1DLcqOqLLNrYXq3uPVGp5ARTCZAxLF7HB3a0B69UcT1Pn1VyquQZA=w1536-d-h2752-mp2',
+                    url: 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzSgmsoN8mWhawG8K5WUmHM-8XPVAV9VI9ib3NXzU1h6oQGM44sM532bR9QEyir-7e7efGoh8Rt9i9EaTpXF3Rzp31pTnYsUJrQqGKJPc9wHtteizoG483Xt01ryl5gstk9u15NfY1y8-hzePNXXnT6oeDxiA=w1536-d-h2752-mp2',
                     message: "Genie Chef has finished your recipe infographic! 🐟"
                 });
             } else {
