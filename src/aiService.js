@@ -30,6 +30,7 @@ export const recommendRecipes = async (ingredients, dietMode) => {
     // 시스템 프롬프트 작성
     const prompt = `
 당신은 최고의 요리사입니다. 사용자가 입력한 식재료 조합을 활용하여, 사용자가 선택한 [식단 목적]에 정확하게 부합하는 레시피를 1~3개 추천해야 합니다.
+중요: 모든 추천 레시피는 무조건 **2인분 기준**이어야 합니다.
 중요: 식재료가 제한적이더라도, 반드시 [식단 목적]의 성격(예: '든든 한끼'면 포만감이 큰 요리, '간단식'이면 빠르고 가벼운 요리, '술안주'면 짭짤하고 매콤한 요리 등)을 극대화하여 독창적인 레시피를 제안하세요. 식단 목적이 다르면 추천 결과도 확실히 달라야 합니다.
 
 식재료: ${ingredients.join(', ')}
@@ -117,7 +118,7 @@ Style Guidelines exactly matching this description:
 - Strict Portrait/Vertical orientation. Must feel cozy, aesthetic, perfectly structured for vertical scrolling, and rich in culinary details.
 `;
 
-// 3. 인포그래픽 실시간 상태 체크 (Gemini 2.5 Flash Image Integration)
+// 3. 인포그래픽 실시간 상태 체크 (Gemini 3.1 Flash Image Integration)
 // [대표님!] NotebookLM 대신 Gemini의 초고속 이미지 생성 능력을 '인포그래픽 스타일'로 극대화했습니다.
 // 사진 한 장에 정보의 기운이 느껴지도록 프롬프트를 고도화했습니다. 🫡📸✨
 export const checkInfographicStatus = async (recipeTitle, recipeDetail) => {
@@ -170,8 +171,9 @@ export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode) =
     // 시스템 프롬프트 작성
     const prompt = `
 당신은 최고의 요리사입니다. 사용자가 선택한 요리 이름과 식재료, 식단 목적을 기반으로 상세 레시피와 영양 정보를 생성해주세요.
+중요!!!: 이 레시피의 요리법, 계량, 영양 정보 등 모든 기준은 반드시 **2인분 기준**이어야 합니다. 각 재료와 소스의 양(예: '100g', '2큰술' 등)을 정확히 2인분에 맞게 명시하세요.
 
-요리 이름: ${recipeTitle}
+요리 이름: ${recipeTitle} (2인분 기준)
 활용 가능 식재료: ${ingredients.join(', ')}
 식단 목적: ${dietMode}
 
@@ -180,8 +182,8 @@ JSON 구조는 다음과 같아야 합니다:
 {
   "time": "예: 15분",
   "difficulty": "예: 쉬움, 보통, 어려움",
-  "ingredientsUsed": ["계란", "양파"],
-  "saucesUsed": ["간장", "설탕", "참기름"],
+  "ingredientsUsed": ["계란 4개", "양파 1개"],
+  "saucesUsed": ["간장 2큰술", "설탕 1큰술", "참기름 1큰술"],
   "steps": [
     "양파를 채 썬다.",
     "계란을 푼다.",
