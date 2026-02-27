@@ -172,24 +172,30 @@ const Recipe = () => {
                                     })}
                                 </div>
 
-                                {recipeDetail?.tip && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100">
-                                        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                                <span className="material-symbols-outlined text-6xl text-amber-500">lightbulb</span>
-                                            </div>
-                                            <div className="relative z-10">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">💡</span>
-                                                    <h4 className="text-sm font-bold text-amber-900">지니 쉪의 특별한 꿀팁</h4>
-                                                </div>
-                                                <p className="text-sm text-amber-800 leading-relaxed font-medium break-keep">
-                                                    {recipeDetail.tip}
-                                                </p>
-                                            </div>
-                                        </div>
+                                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
+                                    <h4 className="text-md font-bold text-slate-800 mb-4 tracking-tight flex items-center gap-2">
+                                        <span className="text-xl">📜</span>
+                                        지니 쉪의 맞춤 인포그래픽 레시피
+                                    </h4>
+                                    <div className="w-full rounded-3xl overflow-hidden shadow-lg border-4 border-white ring-1 ring-slate-200 bg-slate-50 aspect-[3/4] relative group">
+                                        <img
+                                            src="https://lh3.googleusercontent.com/notebooklm/ANHLwAyrr0HcGM-1iHTGT5elx0eOBnKmuvzVGDfSUIIeUMDtwV3pRudvSwmQE2BbFuASayWgU1d6I4PTt9BoAnt6Ki0wdevroQNUcNetPkCYZfu2Dz3Ud3wzvXESzuq771DrX7TxuiaCpwK5AoFrqc-DbKxXeVxNGw=w1536-d-h2752-mp2"
+                                            alt="지속적으로 생성되는 맞춤 인포그래픽"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                        <a
+                                            href="https://notebooklm.google.com/notebook/1b602f6d-7188-4e1c-8b09-ac95a947490e"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-[11px] font-bold text-slate-800 shadow-sm flex items-center gap-2 active:scale-95 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                            원본 크게 보기
+                                        </a>
                                     </div>
-                                )}
+                                    <p className="mt-4 text-[11px] text-slate-400 font-medium">※ NotebookLM AI가 실시간으로 생성한 전용 레시피입니다.</p>
+                                </div>
                             </div>
                         )}
                     </div>
