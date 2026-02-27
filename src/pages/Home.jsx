@@ -239,7 +239,7 @@ const Home = () => {
                   <span className="animate-bounce block">👨‍🍳</span>
                   <span className="absolute top-0 right-0 -mr-2 -mt-1 material-symbols-outlined text-amber-200 text-sm animate-ping">emoji_objects</span>
                 </div>
-                <span>AI 쉐프가 식단 고민 중...</span>
+                <span>지니 쉪이 식단 고민 중...</span>
               </div>
             ) : (
               <>

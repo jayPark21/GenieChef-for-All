@@ -9,6 +9,31 @@ const Recipe = () => {
 
     const [recipeDetail, setRecipeDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [timeLeft, setTimeLeft] = useState(15 * 60); // 15분 디폴트
+    const [isTimerActive, setIsTimerActive] = useState(false);
+
+    useEffect(() => {
+        let interval = null;
+        if (isTimerActive && timeLeft > 0) {
+            interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+        } else if (timeLeft === 0 && isTimerActive) {
+            setIsTimerActive(false);
+            alert("지니 쉪: 삐빅! 요리 완성 시간입니다! 맛있게 드십시오! 🐟");
+        }
+        return () => clearInterval(interval);
+    }, [isTimerActive, timeLeft]);
+
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    const handleYouTubeLink = () => {
+        if (recipe?.title) {
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.title + ' 황금 레시피')}`, '_blank');
+        }
+    };
 
     useEffect(() => {
         if (!recipe) {
@@ -219,7 +244,7 @@ const Recipe = () => {
                         </div>
                         <h4 className="text-lg font-bold text-slate-900 mb-2">영상을 보며 함께 요리해요</h4>
                         <p className="text-sm text-slate-500 mb-6">원본 레시피 가이드를<br />유튜브 영상으로 확인해보세요.</p>
-                        <button className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20">
+                        <button onClick={handleYouTubeLink} className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
                             </svg>
@@ -230,10 +255,22 @@ const Recipe = () => {
             </main>
 
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-50">
-                <button className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined">timer</span>
-                    타이머 시작하기
-                </button>
+                {isTimerActive ? (
+                    <div className="w-full py-4 bg-slate-900 border border-slate-700 text-white font-bold rounded-2xl shadow-2xl flex items-center justify-between px-6">
+                        <span className="material-symbols-outlined text-amber-500 animate-pulse">timer</span>
+                        <span className="text-3xl font-mono tracking-widest text-amber-400">{formatTime(timeLeft)}</span>
+                        <button onClick={() => setIsTimerActive(false)} className="text-[11px] bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors uppercase tracking-wider">
+                            일시정지
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setIsTimerActive(true)}
+                        className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                        <span className="material-symbols-outlined">timer</span>
+                        {timeLeft < 15 * 60 && timeLeft > 0 ? '타이머 다시 시작하기' : '요리 타이머 시작 (15분)'}
+                    </button>
+                )}
             </div>
         </div>
     );
