@@ -57,7 +57,7 @@ const Recipe = () => {
     }, [recipe, ingredients, dietMode, navigate]);
 
     return (
-        <div className="font-display text-slate-900 min-h-screen flex flex-col pb-24 bg-white">
+        <div className="font-display text-slate-900 min-h-screen flex flex-col pb-72 bg-white">
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-slate-100 px-4 py-3 flex items-center justify-between">
                 <button onClick={() => navigate(-1)} className="size-10 rounded-full flex items-center justify-center text-slate-600">
                     <span className="material-symbols-outlined">arrow_back_ios_new</span>
@@ -272,7 +272,7 @@ const Recipe = () => {
                     </div>
                 </section>
 
-                <section className="px-6 py-8 border-t border-slate-100 bg-slate-50/50">
+                <section className="px-6 py-8 border-t border-slate-100 bg-slate-50/50 mb-12">
                     <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col items-center text-center">
                         <div className="size-14 rounded-full bg-youtube/10 flex items-center justify-center mb-4">
                             <svg className="w-8 h-8 text-youtube" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -281,7 +281,7 @@ const Recipe = () => {
                         </div>
                         <h4 className="text-lg font-bold text-slate-900 mb-2">영상을 보며 함께 요리해요</h4>
                         <p className="text-sm text-slate-500 mb-6">원본 레시피 가이드를<br />유튜브 영상으로 확인해보세요.</p>
-                        <button onClick={handleYouTubeLink} className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20">
+                        <button onClick={handleYouTubeLink} className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20 hover:bg-youtube/90">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
                             </svg>
