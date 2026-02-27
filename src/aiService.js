@@ -48,12 +48,34 @@ export const recommendRecipes = async (ingredients, dietMode) => {
         const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const recipes = JSON.parse(cleanedText);
 
-        // 이미지 랜덤 할당 및 최종 데이터 포맷팅
-        return recipes.map((recipe, index) => ({
-            ...recipe,
-            id: Date.now() + index, // 고유 ID 보장
-            img: FACK_IMAGES[index % FACK_IMAGES.length] // 랜덤/순차 이미지
+        // 이미지 랜덤 할당 모의에서 실제 AI 이미지 생성으로 변경
+        const imageModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+
+        const recipesWithImages = await Promise.all(recipes.map(async (recipe, index) => {
+            let imageUrl = FACK_IMAGES[index % FACK_IMAGES.length]; // fallback
+            try {
+                const imagePrompt = `${recipe.title} delicious high quality food photography`;
+                const imageResult = await imageModel.generateContent(imagePrompt);
+
+                if (imageResult && imageResult.response && imageResult.response.candidates && imageResult.response.candidates.length > 0) {
+                    const parts = imageResult.response.candidates[0].content.parts;
+                    const imagePart = parts.find(p => p.inlineData);
+                    if (imagePart && imagePart.inlineData) {
+                        imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+                    }
+                }
+            } catch (e) {
+                console.error("Home recipe thumbnail generation failed:", e);
+            }
+
+            return {
+                ...recipe,
+                id: Date.now() + index,
+                img: imageUrl
+            };
         }));
+
+        return recipesWithImages;
 
     } catch (error) {
         console.error("AI 레시피 추천 실패:", error);
@@ -99,39 +121,40 @@ JSON 구조는 다음과 같아야 합니다:
 }
 `;
 
-    // 상세 정보와 이미지를 병렬로 생성하여 속도 향상
-    const imageModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
-    const imagePrompt = `${recipeTitle} delicious high quality food photography, photorealistic, professional lighting`;
+    try {
+        // 상세 정보와 이미지를 병렬로 생성하여 속도 향상
+        const imageModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+        const imagePrompt = `${recipeTitle} delicious high quality food photography, photorealistic, professional lighting`;
 
-    const [result, imageResult] = await Promise.all([
-        model.generateContent(prompt),
-        imageModel.generateContent(imagePrompt).catch(e => {
-            console.error("Gemini image generation failed:", e);
-            return null;
-        })
-    ]);
+        const [result, imageResult] = await Promise.all([
+            model.generateContent(prompt),
+            imageModel.generateContent(imagePrompt).catch(e => {
+                console.error("Gemini image generation failed:", e);
+                return null;
+            })
+        ]);
 
-    const responseText = result.response.text();
+        const responseText = result.response.text();
 
-    // JSON 파싱 (마크다운 블록 제거)
-    const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const recipeDetail = JSON.parse(cleanedText);
+        // JSON 파싱 (마크다운 블록 제거)
+        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const recipeDetail = JSON.parse(cleanedText);
 
-    // 이미지 데이터 매핑
-    let imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop"; // fallback
-    if (imageResult && imageResult.response && imageResult.response.candidates && imageResult.response.candidates.length > 0) {
-        const parts = imageResult.response.candidates[0].content.parts;
-        const imagePart = parts.find(p => p.inlineData);
-        if (imagePart && imagePart.inlineData) {
-            imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        // 이미지 데이터 매핑
+        let imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop"; // fallback
+        if (imageResult && imageResult.response && imageResult.response.candidates && imageResult.response.candidates.length > 0) {
+            const parts = imageResult.response.candidates[0].content.parts;
+            const imagePart = parts.find(p => p.inlineData);
+            if (imagePart && imagePart.inlineData) {
+                imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+            }
         }
+        recipeDetail.img = imageUrl;
+
+        return recipeDetail;
+
+    } catch (error) {
+        console.error("AI 상세 레시피 생성 실패:", error);
+        throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
     }
-    recipeDetail.img = imageUrl;
-
-    return recipeDetail;
-
-} catch (error) {
-    console.error("AI 상세 레시피 생성 실패:", error);
-    throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
-}
 };
