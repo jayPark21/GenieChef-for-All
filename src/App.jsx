@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Recipe from './pages/Recipe';
 import Refrigerator from './pages/Refrigerator';
 import ShoppingList from './pages/ShoppingList';
+import NutritionGuide from './pages/NutritionGuide';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/recipe" element={<Recipe />} />
         <Route path="/refrigerator" element={<Refrigerator />} />
         <Route path="/shopping-list" element={<ShoppingList />} />
+        <Route path="/guide" element={<NutritionGuide />} />
       </Routes>
     </Router>
   );

@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { recommendRecipes } from '../aiService';
 
 const initialIngredients = [
   { id: 1, name: '계란', icon: '🥚', category: '냉장' },
@@ -35,13 +38,56 @@ const dietModes = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const [dietMode, setDietMode] = useState('든든한 한끼');
-  const [selectedIngredients, setSelectedIngredients] = useState(
-    initialIngredients.map(item => item.id)
-  );
+  const [dietMode, setDietMode] = useState('든든 한끼');
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [recommendations, setRecommendations] = useState(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Firestore 사용자 문서 참조 (현재 로그인이 없으므로 guest_user 하드코딩)
+  const userRef = doc(db, 'users', 'guest_user');
+
+  // 첫 마운트 시 Firestore에서 데이터 불러오기
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.dietMode) setDietMode(data.dietMode);
+          if (data.selectedIngredients) setSelectedIngredients(data.selectedIngredients);
+        } else {
+          // 문서가 없으면 초기값(전체선택) 세팅
+          setSelectedIngredients(initialIngredients.map(item => item.id));
+        }
+      } catch (error) {
+        console.error("Firestore 로드 에러:", error);
+        setSelectedIngredients(initialIngredients.map(item => item.id));
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // 상태가 변경될 때마다 Firestore에 저장 (디바운스 처리는 생략, 단순 구현)
+  useEffect(() => {
+    if (isInitializing) return; // 초기 로딩 중에는 덮어쓰지 않음
+
+    const saveData = async () => {
+      try {
+        await setDoc(userRef, {
+          dietMode,
+          selectedIngredients,
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error("Firestore 저장 에러:", error);
+      }
+    };
+    saveData();
+  }, [dietMode, selectedIngredients, isInitializing]);
 
   const toggleIngredient = (id) => {
     setSelectedIngredients(prev =>
@@ -49,38 +95,25 @@ const Home = () => {
     );
   };
 
-  const handleRecommend = () => {
+  const handleRecommend = async () => {
     setIsLoading(true);
     setRecommendations(null);
     setSelectedRecipeId(null);
 
-    // 모의 AI 추천 딜레이
-    setTimeout(() => {
-      const mockMeals = [
-        {
-          id: 1,
-          title: '15분 완성 계란 두부 조림',
-          desc: '선택하신 냉장고 재료를 활용해 따뜻하고 든든한 밥도둑을 만들어보세요.',
-          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCk-jlvRf36zw9T3Z-W68qPBOErC2FAs45bXt9qgZtwfW2hLbhMjlZUS2wS1Lkta6wfjD2mZlIed4KT7VQ73054ELVw_bR45BNVn5C08dMPsJQvJx6oW3WIYOWQT__9wQ8L5OQV6G910LkEkYCsqbcQX8cW63CRCrhR8e31FnBYBrAHsksZR6p4zXu29LO703ohAo9bcbINYEGhzjpQpWhUpi9TKhDxS_rKOtCqdEb9uidGLAADiQ6TLXgmymDyCiGRwra1W5708HY',
-        },
-        {
-          id: 2,
-          title: '초간단 계란 마요 덮밥',
-          desc: '마요네즈와 계란, 양파를 활용한 5분 컷 한끼 식사.',
-          img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop',
-        },
-        {
-          id: 3,
-          title: '매콤달콤 소시지 야채 볶음',
-          desc: '햄소시지, 양파, 당근에 케첩 고추장 소스를 곁들인 최고의 반찬.',
-          img: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=2672&auto=format&fit=crop',
-        },
-      ];
-      // 1~3개의 식단 무작위로 추출
-      const count = Math.floor(Math.random() * 3) + 1;
-      setRecommendations(mockMeals.slice(0, count));
+    try {
+      // 선택된 재료 ID를 이름으로 변환
+      const ingredientNames = selectedIngredients.map(
+        id => initialIngredients.find(item => item.id === id)?.name
+      ).filter(Boolean);
+
+      // AI 서비스 호출
+      const recipes = await recommendRecipes(ingredientNames, dietMode);
+      setRecommendations(recipes);
+    } catch (error) {
+      alert("AI 레시피 생성 중 오류가 발생했습니다. (API 키를 확인해주세요)\n" + error.message);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const renderIngredientGroup = (categoryName, titleColorClass, dotColorClass) => {
@@ -133,11 +166,13 @@ const Home = () => {
 
       <main className="flex-1 overflow-y-auto pb-48">
         <section className="px-5 py-6">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">restaurant_menu</span>
-            어떤 식단을 목표로 하시나요?
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">restaurant_menu</span>
+              어떤 식단을 목표로 하시나요?
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
             {dietModes.map(mode => (
               <button
                 key={mode.id}
@@ -156,6 +191,10 @@ const Home = () => {
               </button>
             ))}
           </div>
+          <button onClick={() => navigate('/guide')} className="w-full py-3 rounded-2xl bg-blue-50 text-blue-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+            <span className="material-symbols-outlined text-lg">lightbulb</span>
+            나에게 맞는 최적의 탄단지 비율 찾기
+          </button>
         </section>
 
         <section className="px-5 py-4 space-y-6">
