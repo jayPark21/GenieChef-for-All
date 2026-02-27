@@ -1,19 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4ADE80;
+  --color-accent: #FACC15;
+  --color-youtube: #FF0000;
+  --color-fridge-blue: #E0F2FE;
+  --color-freezer-cyan: #ECFEFF;
+  --color-pantry-orange: #FFF7ED;
+  --color-carb: #60A5FA;
+  --color-protein: #F87171;
+  --color-fat: #FB923C;
+  --color-purple-200: #E9D5FF;
+  --color-purple-500: #A855F7;
+  --font-display: "Plus Jakarta Sans", "Noto Sans KR", sans-serif;
+}
 
 @layer base {
   body {
     background-color: #F8FAFC;
     min-height: max(884px, 100dvh);
-  }
-}
-
-@layer components {
-  .ingredient-tag {
-    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 cursor-pointer;
-  }
-  .ingredient-tag.selected {
-    @apply bg-primary border-primary text-white shadow-md shadow-primary/20;
   }
 }

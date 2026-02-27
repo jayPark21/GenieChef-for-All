@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Recipe = () => {
     const navigate = useNavigate();
+    const [isInfographicLoaded, setIsInfographicLoaded] = useState(false);
+
+    useEffect(() => {
+        // 모의 로딩 지연 (예: 3초 후 인포그래픽 로드 완료)
+        const timer = setTimeout(() => {
+            setIsInfographicLoaded(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <div className="font-display text-slate-900 min-h-screen flex flex-col pb-24 bg-white">
@@ -19,12 +28,12 @@ const Recipe = () => {
             <main className="flex-1 overflow-y-auto">
                 <section className="relative">
                     <div className="aspect-[4/3] w-full overflow-hidden">
-                        <img alt="백종원표 계란 두부 조림" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk-jlvRf36zw9T3Z-W68qPBOErC2FAs45bXt9qgZtwfW2hLbhMjlZUS2wS1Lkta6wfjD2mZlIed4KT7VQ73054ELVw_bR45BNVn5C08dMPsJQvJx6oW3WIYOWQT__9wQ8L5OQV6G910LkEkYCsqbcQX8cW63CRCrhR8e31FnBYBrAHsksZR6p4zXu29LO703ohAo9bcbINYEGhzjpQpWhUpi9TKhDxS_rKOtCqdEb9uidGLAADiQ6TLXgmymDyCiGRwra1W5708HY" />
+                        <img alt="15분 완성 계란 두부 조림" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk-jlvRf36zw9T3Z-W68qPBOErC2FAs45bXt9qgZtwfW2hLbhMjlZUS2wS1Lkta6wfjD2mZlIed4KT7VQ73054ELVw_bR45BNVn5C08dMPsJQvJx6oW3WIYOWQT__9wQ8L5OQV6G910LkEkYCsqbcQX8cW63CRCrhR8e31FnBYBrAHsksZR6p4zXu29LO703ohAo9bcbINYEGhzjpQpWhUpi9TKhDxS_rKOtCqdEb9uidGLAADiQ6TLXgmymDyCiGRwra1W5708HY" />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                     <div className="absolute bottom-6 left-6 right-6">
                         <span className="inline-block px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full mb-2">AI 추천 메뉴</span>
-                        <h2 className="text-2xl font-bold text-white leading-tight">백종원표 계란 두부 조림</h2>
+                        <h2 className="text-2xl font-bold text-white leading-tight">15분 완성 계란 두부 조림</h2>
                         <div className="flex items-center gap-3 mt-2 text-white/90 text-sm">
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 15분</span>
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">star</span> 쉬움</span>
@@ -60,54 +69,49 @@ const Recipe = () => {
                 </section>
 
                 <section className="px-6 py-10">
-                    <h3 className="text-lg font-bold text-slate-900 mb-10 text-center">요리 과정 인포그래픽</h3>
-                    <div className="space-y-16">
-                        <div className="relative flex flex-col items-center text-center">
-                            <div className="absolute top-8 left-1/2 w-0.5 h-12 bg-slate-100 -translate-x-1/2 -z-10"></div>
-                            <div className="size-16 rounded-3xl bg-amber-50 border-2 border-amber-100 flex items-center justify-center mb-4 shadow-sm relative z-10">
-                                <span className="material-symbols-outlined text-amber-500 text-3xl">restaurant</span>
-                            </div>
-                            <div className="px-4">
-                                <span className="text-[10px] font-bold text-primary mb-1 block">STEP 01</span>
-                                <h4 className="font-bold text-slate-800 mb-1">재료 손질하기</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">두부는 1cm 두께로 썰고, 대파와 양파는 잘게 다져 준비합니다.</p>
-                            </div>
-                        </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-6 text-center">요리 과정 인포그래픽</h3>
 
-                        <div className="relative flex flex-col items-center text-center">
-                            <div className="absolute top-8 left-1/2 w-0.5 h-12 bg-slate-100 -translate-x-1/2 -z-10"></div>
-                            <div className="size-16 rounded-3xl bg-blue-50 border-2 border-blue-100 flex items-center justify-center mb-4 shadow-sm relative z-10">
-                                <span className="material-symbols-outlined text-blue-500 text-3xl">skillet</span>
-                            </div>
-                            <div className="px-4">
-                                <span className="text-[10px] font-bold text-primary mb-1 block">STEP 02</span>
-                                <h4 className="font-bold text-slate-800 mb-1">두부 노릇하게 굽기</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">팬에 식용유를 두르고 두부를 앞뒤로 노릇노릇하게 구워주세요.</p>
-                            </div>
-                        </div>
+                    {/* NotebookLM Infographic Loading Area */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[300px] flex flex-col items-center justify-center">
+                        {!isInfographicLoaded ? (
+                            <div className="flex flex-col items-center justify-center space-y-6 animate-pulse">
+                                {/* AI 쉐프 애니메이션 아이콘 */}
+                                <div className="relative">
+                                    <div className="size-24 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-5xl relative z-10 animate-bounce">
+                                        👨‍🍳
+                                    </div>
+                                    <div className="absolute top-0 right-0 -mr-4 -mt-2">
+                                        <span className="material-symbols-outlined text-amber-400 text-3xl animate-ping">emoji_objects</span>
+                                    </div>
+                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-200 rounded-[100%] blur-sm"></div>
+                                </div>
 
-                        <div className="relative flex flex-col items-center text-center">
-                            <div className="absolute top-8 left-1/2 w-0.5 h-12 bg-slate-100 -translate-x-1/2 -z-10"></div>
-                            <div className="size-16 rounded-3xl bg-orange-50 border-2 border-orange-100 flex items-center justify-center mb-4 shadow-sm relative z-10">
-                                <span className="material-symbols-outlined text-orange-500 text-3xl">egg</span>
-                            </div>
-                            <div className="px-4">
-                                <span className="text-[10px] font-bold text-primary mb-1 block">STEP 03</span>
-                                <h4 className="font-bold text-slate-800 mb-1">계란물과 소스 붓기</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">두부 위에 계란물을 입히고 준비한 간장 소스를 골고루 부어줍니다.</p>
-                            </div>
-                        </div>
+                                <div className="text-center space-y-2">
+                                    <p className="text-primary font-bold text-lg">AI 쉐프가 요리 과정을<br />인포그래픽으로 예쁘게 굽는 중...</p>
+                                    <p className="text-slate-400 text-xs">잠시만 기다려주세요! (맛있는 냄새 킁킁)</p>
+                                </div>
 
-                        <div className="relative flex flex-col items-center text-center">
-                            <div className="size-16 rounded-3xl bg-rose-50 border-2 border-rose-100 flex items-center justify-center mb-4 shadow-sm relative z-10">
-                                <span className="material-symbols-outlined text-rose-500 text-3xl">fire_hydrant</span>
+                                <div className="flex gap-1.5 mt-2">
+                                    <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                    <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                    <div className="w-2 h-2 rounded-full bg-primary/80 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '450ms' }}></div>
+                                </div>
                             </div>
-                            <div className="px-4">
-                                <span className="text-[10px] font-bold text-primary mb-1 block">STEP 04</span>
-                                <h4 className="font-bold text-slate-800 mb-1">약불에 자작하게 졸이기</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">뚜껑을 덮고 약불에서 5분간 졸여내면 밥도둑 완성!</p>
+                        ) : (
+                            <div className="w-full animate-fade-in transition-opacity duration-1000">
+                                <div className="flex items-center gap-2 mb-4 justify-center">
+                                    <span className="material-symbols-outlined text-primary text-xl">check_circle</span>
+                                    <span className="text-sm font-bold text-slate-700">AI 인포그래픽 생성 완료!</span>
+                                </div>
+                                <img
+                                    src="https://lh3.googleusercontent.com/notebooklm/ANHLwAzv388nZSA8SWLQVmdeqm8SHOEBwZH12hx66t9Lw6Pd_sYys08yJ9B4NsvJohcPfjakpD5vxKz8UYtI7-9HBFX25-0HuN8vPAXvJdVeBBRx0H_l-aAlcDaOO1vIUWYN6PBhaANqqyCCVEvImlGg9TA4mpea=w1536-d-h2752-mp2"
+                                    alt="요리 과정 인포그래픽"
+                                    className="w-full h-auto rounded-2xl shadow-md border border-slate-200"
+                                    onLoad={() => console.log('Infographic fully loaded')}
+                                />
                             </div>
-                        </div>
+                        )}
                     </div>
                 </section>
 
@@ -190,12 +194,12 @@ const Recipe = () => {
                             </svg>
                         </div>
                         <h4 className="text-lg font-bold text-slate-900 mb-2">영상을 보며 함께 요리해요</h4>
-                        <p className="text-sm text-slate-500 mb-6">백종원의 원본 레시피 가이드를<br />유튜브 영상으로 확인해보세요.</p>
+                        <p className="text-sm text-slate-500 mb-6">원본 레시피 가이드를<br />유튜브 영상으로 확인해보세요.</p>
                         <button className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
                             </svg>
-                            백종원 레시피 영상 보기
+                            레시피 영상 보기
                         </button>
                     </div>
                 </section>
