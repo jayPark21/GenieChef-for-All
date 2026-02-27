@@ -179,8 +179,8 @@ const Recipe = () => {
                                     </h4>
                                     <div className="w-full rounded-3xl overflow-hidden shadow-lg border-4 border-white ring-1 ring-slate-200 bg-slate-50 aspect-[3/4] relative group">
                                         <img
-                                            src="https://lh3.googleusercontent.com/notebooklm/ANHLwAyrr0HcGM-1iHTGT5elx0eOBnKmuvzVGDfSUIIeUMDtwV3pRudvSwmQE2BbFuASayWgU1d6I4PTt9BoAnt6Ki0wdevroQNUcNetPkCYZfu2Dz3Ud3wzvXESzuq771DrX7TxuiaCpwK5AoFrqc-DbKxXeVxNGw=w1536-d-h2752-mp2"
-                                            alt="지속적으로 생성되는 맞춤 인포그래픽"
+                                            src="https://lh3.googleusercontent.com/notebooklm/ANHLwAwH7LmVeZA76SfcaNAEf6Abvw8hpW0xy_iG895cH12EopyhkFe0U0XyiCVlmjsyb7Y2uk-eKa4_bCQjWU6IUdMtG3FPGnISOF-dHRbGEqI8Dn3isv2vGPtAlIEgHBo4ZGIRGhTyDhuw7AdSEkaZPmXR46N2=w1536-d-h2752-mp2"
+                                            alt="지니 쉪의 실시간 인포그래픽 레시피"
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
