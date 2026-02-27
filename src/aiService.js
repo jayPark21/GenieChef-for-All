@@ -2,9 +2,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // [땡칠이 팀장 중요 브리핑]
 // 외부 NotebookLM 대신 Gemini API를 이용한 '자체 실시간 이미지 생성'으로 전환했습니다!
-// 디자인 통제권과 속도(10분->20초)를 모두 잡았습니다. 🫡🚀🧪
+// [초고속 모드 전환] 대표님 요청으로 텍스트는 번개처럼 빠른 Flash 모델을 사용하고, 목록 썸네일 생성은 건너뜁니다! ⚡️⚡️⚡️
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const MODEL_NAME = "gemini-3.1-pro-preview";
+const MODEL_NAME = "gemini-3-flash-preview";
 const IMAGE_MODEL_NAME = "gemini-3.1-flash-image-preview";
 const GEN_IMAGE_PROMPT = (title) => `Create a high-end, professional food photography of '${title}'. Portrait orientation, moody lighting, gourmet plating, high resolution, realistic textures, vibrant colors. No text in image.`;
 
@@ -12,13 +12,7 @@ const GEN_IMAGE_PROMPT = (title) => `Create a high-end, professional food photog
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// 레시피 추천에 사용할 공통 이미지 풀
-const FACK_IMAGES = [
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=2672&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?q=80&w=2670&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=2670&auto=format&fit=crop'
-];
+// 레시피 추천 중 임시 이미지 삭제 (UI에서 로딩 애니메이션으로 대체)
 
 export const recommendRecipes = async (ingredients, dietMode) => {
     if (!genAI) {
@@ -57,31 +51,12 @@ export const recommendRecipes = async (ingredients, dietMode) => {
         const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const recipes = JSON.parse(cleanedText);
 
-        // 이미지 모델 호출
-        const imageModel = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });
-
-        const recipesWithImages = await Promise.all(recipes.map(async (recipe, index) => {
-            let imageUrl = FACK_IMAGES[index % FACK_IMAGES.length]; // fallback
-            try {
-                const imagePrompt = `${recipe.title} delicious high quality food photography`;
-                const imageResult = await imageModel.generateContent(imagePrompt);
-
-                if (imageResult && imageResult.response && imageResult.response.candidates && imageResult.response.candidates.length > 0) {
-                    const parts = imageResult.response.candidates[0].content.parts;
-                    const imagePart = parts.find(p => p.inlineData);
-                    if (imagePart && imagePart.inlineData) {
-                        imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-                    }
-                }
-            } catch (e) {
-                console.error("Home recipe thumbnail generation failed:", e);
-            }
-
-            return {
-                ...recipe,
-                id: Date.now() + index,
-                img: imageUrl
-            };
+        // [땡칠이 팀장 최적화] 방안 A 적용: 썸네일 AI 이미지 생성 생략 (체감 속도 MAX)
+        // 백엔드 통신 없이 이미지 부분을 비워둔 채 먼저 텍스트를 반환합니다.
+        const recipesWithImages = recipes.map((recipe, index) => ({
+            ...recipe,
+            id: Date.now() + index,
+            img: null
         }));
 
         return recipesWithImages;
@@ -90,6 +65,26 @@ export const recommendRecipes = async (ingredients, dietMode) => {
         console.error("AI 레시피 추천 실패:", error);
         throw new Error("레시피 추천을 생성하는 중 오류가 발생했습니다.");
     }
+};
+
+export const generateRecipeImage = async (title) => {
+    if (!genAI) return null;
+    try {
+        const imageModel = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });
+        // 빠른 속도로 적당한 품질의 음식 사진을 생성합니다.
+        const imagePrompt = `${title}, delicious food photography, appetizing, bright lighting`;
+        const imageResult = await imageModel.generateContent(imagePrompt);
+
+        if (imageResult?.response?.candidates?.[0]?.content?.parts) {
+            const imagePart = imageResult.response.candidates[0].content.parts.find(p => p.inlineData);
+            if (imagePart && imagePart.inlineData) {
+                return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+            }
+        }
+    } catch (error) {
+        console.error("Header image generation failed:", error);
+    }
+    return null;
 };
 
 const GEN_INFOGRAPHIC_PROMPT = (title, detail) => `
@@ -191,13 +186,13 @@ JSON 구조는 다음과 같아야 합니다:
   ],
   "tip": "요리의 맛을 한층 끌어올릴 수 있는 지니 쉪만의 특별한 꿀팁 (1~2문장)",
   "nutrition": {
-    "calories": 350,
-    "carbs": 20,
-    "protein": 45,
-    "fat": 35,
-    "sodium": "420mg",
-    "sugar": "4.5g",
-    "fiber": "2.1g"
+    "calories": "예: 350kcal",
+    "carbs": "예: 20g (6%)",
+    "protein": "예: 45g (82%)",
+    "fat": "예: 35g (65%)",
+    "sodium": "예: 420mg",
+    "sugar": "예: 4.5g",
+    "fiber": "예: 2.1g"
   }
 }
 `;

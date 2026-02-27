@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { generateRecipeDetail, checkInfographicStatus } from '../aiService';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { generateRecipeDetail, checkInfographicStatus, generateRecipeImage } from '../aiService';
 import { motion } from 'framer-motion';
 
 import RecipeInfographic from '../components/RecipeInfographic';
@@ -14,6 +16,10 @@ const Recipe = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [timeLeft, setTimeLeft] = useState(15 * 60);
     const [isTimerActive, setIsTimerActive] = useState(false);
+    const [isSavingHistory, setIsSavingHistory] = useState(false);
+
+    // 헤더 이미지 상태 (초기값은 null로 두어 스피너가 먼저 돌게 함)
+    const [headerImage, setHeaderImage] = useState(null);
 
     // 인포그래픽 실시간 생성 상태 관리
     const [isGeneratingInfo, setIsGeneratingInfo] = useState(true);
@@ -42,6 +48,78 @@ const Recipe = () => {
         const m = Math.floor(seconds / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
+    };
+
+    const handleSaveHistory = async () => {
+        if (!recipeDetail) {
+            alert("저장할 레시피 정보가 없습니다.");
+            return;
+        }
+
+        setIsSavingHistory(true);
+        try {
+            const generatedMarkdown = `
+## 👨‍🍳 요리 가이드 (${dietMode || '일반식'})
+
+**소요 시간:** ${recipeDetail.time}
+**난이도:** ${recipeDetail.difficulty}
+**칼로리:** ${recipeDetail.nutrition?.calories || 'N/A'}
+
+### 🥬 주재료
+${(recipeDetail.ingredientsUsed || []).join(', ')}
+
+### 🧂 양념 및 소스
+${(recipeDetail.saucesUsed || []).join(', ')}
+
+### 🍳 조리 순서
+${(recipeDetail.steps || []).map((step, idx) => `${idx + 1}. ${step}`).join('\n')}
+
+### 💡 쉪의 꿀팁
+> ${recipeDetail.tip}
+`;
+
+            // Canvas를 이용해 Base64 이미지를 압축하는 유틸리티 (Firestore 1MB 용량 제한 해결)
+            const compressImage = (base64Str, maxWidth = 800) => {
+                return new Promise((resolve) => {
+                    if (!base64Str || !base64Str.startsWith('data:image')) {
+                        resolve(base64Str);
+                        return;
+                    }
+                    const img = new Image();
+                    img.src = base64Str;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ratio = maxWidth / img.width;
+                        canvas.width = maxWidth;
+                        canvas.height = img.height * ratio;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // JPEG 포맷, 품질 60% 로 용량 대폭 축소
+                    };
+                    img.onerror = () => resolve(base64Str);
+                });
+            };
+
+            const compressedImageUrl = infoUrl ? await compressImage(infoUrl) : null;
+
+            // 사용자 인증 기능이 아직 없으므로 'guest_user'로 하드코딩
+            const historyRef = collection(db, 'users', 'guest_user', 'history');
+
+            await addDoc(historyRef, {
+                title: recipe.title,
+                dietMode: dietMode || '일반식',
+                markdown: generatedMarkdown.trim(),
+                imageUrl: compressedImageUrl, // 압축된 인포그래픽 이미지 URL 저장
+                createdAt: new Date()
+            });
+
+            alert("레시피가 히스토리에 성공적으로 저장되었습니다!");
+        } catch (error) {
+            console.error("히스토리 저장 중 오류 발생:", error);
+            alert("히스토리 저장에 실패했습니다. (용량 문제일 수 있습니다)");
+        } finally {
+            setIsSavingHistory(false);
+        }
     };
 
     const handleYouTubeLink = () => {
@@ -87,7 +165,13 @@ const Recipe = () => {
             }
         };
 
+        const fetchImage = async () => {
+            const img = await generateRecipeImage(recipe.title);
+            if (img) setHeaderImage(img);
+        };
+
         fetchDetail();
+        fetchImage();
     }, [recipe, ingredients, dietMode, navigate]);
 
     // 2. 인포그래픽 이미지 생성 및 자동 스크롤 (recipeDetail 완료 후 실행)
@@ -168,8 +252,15 @@ const Recipe = () => {
 
             <main className="flex-1 overflow-y-auto">
                 <section className="relative">
-                    <div className="aspect-[4/3] w-full overflow-hidden">
-                        <img alt={recipe?.title || '레시피 이미지'} className="w-full h-full object-cover" src={recipe?.img || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2626&auto=format&fit=crop"} />
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-slate-200 relative">
+                        {headerImage ? (
+                            <img alt={recipe?.title || '레시피 이미지'} className="w-full h-full object-cover transition-opacity duration-500 ease-in-out" src={headerImage} />
+                        ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-100">
+                                <div className="size-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                                <span className="text-sm font-bold text-slate-400">사진 조리 중 🍳</span>
+                            </div>
+                        )}
                     </div>
                     <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                     <div className="absolute bottom-6 left-6 right-6">
@@ -279,16 +370,35 @@ const Recipe = () => {
                         {recipeDetail?.nutrition && (
                             <div className="space-y-6">
                                 <div className="flex items-center gap-6">
-                                    <div className="size-24 rounded-full bg-slate-100 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-black">{recipeDetail.nutrition.calories}</span>
+                                    <div className="size-24 rounded-full bg-slate-100 flex flex-col items-center justify-center shrink-0">
+                                        <span className="text-2xl font-black">{String(recipeDetail.nutrition.calories).replace(/kcal/i, '').trim()}</span>
                                         <span className="text-[10px] text-slate-400 font-black">KCAL</span>
                                     </div>
                                     <div className="flex-1 space-y-4">
-                                        {['carbs', 'protein', 'fat'].map(key => (
-                                            <div key={key} className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-primary" style={{ width: `${recipeDetail.nutrition[key]}%` }}></div>
-                                            </div>
-                                        ))}
+                                        {['carbs', 'protein', 'fat'].map(key => {
+                                            const val = recipeDetail.nutrition[key];
+                                            const label = key === 'carbs' ? '탄수화물' : key === 'protein' ? '단백질' : '지방';
+
+                                            let percent = 0;
+                                            if (typeof val === 'number') {
+                                                percent = val;
+                                            } else {
+                                                const match = String(val).match(/\((\d+)%\)/);
+                                                percent = match ? Number(match[1]) : (parseInt(val) || 0);
+                                            }
+
+                                            return (
+                                                <div key={key} className="space-y-1.5">
+                                                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                                                        <span>{label}</span>
+                                                        <span className="text-primary">{val}</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, percent)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -296,12 +406,31 @@ const Recipe = () => {
                     </div>
                 </section>
 
-                <div id="infographic-section" className="px-6 py-12 flex flex-col items-center border-t border-slate-100">
+                <div id="infographic-section" className="px-6 py-12 flex flex-col items-center border-t border-slate-100 pb-32">
                     <h4 className="text-2xl font-black text-slate-800 mb-8 tracking-tighter flex items-center gap-3">
                         <span className="text-3xl filter drop-shadow-md">🎨</span>
                         지니 쉪의 한장 레시피
                     </h4>
                     {renderInfographicSection()}
+
+                    {/* 히스토리 저장 버튼 영역 (인포그래픽이 생성된 이후에만 노출) */}
+                    {!isGeneratingInfo && recipeDetail && (
+                        <div className="mt-8 w-full max-w-sm">
+                            <button
+                                onClick={handleSaveHistory}
+                                disabled={isSavingHistory}
+                                className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${isSavingHistory
+                                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                                    : 'bg-primary/10 text-primary hover:bg-primary/20 active:scale-95'
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined">
+                                    {isSavingHistory ? 'hourglass_empty' : 'bookmark'}
+                                </span>
+                                {isSavingHistory ? '저장 중...' : '히스토리에 저장하기'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -11,21 +11,47 @@ const Refrigerator = () => {
     const [isInitializing, setIsInitializing] = useState(true);
     const [addingCategory, setAddingCategory] = useState(null);
     const [newIngredientName, setNewIngredientName] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const skipSaveRef = useRef(true);
 
     const userRef = doc(db, 'users', 'guest_user');
 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const cachedStr = localStorage.getItem('geniechef_user_data');
+                const now = Date.now();
+                let needsDbSync = true;
+
+                if (cachedStr) {
+                    const data = JSON.parse(cachedStr);
+                    if (data.ownedIngredients) setOwnedIngredients(data.ownedIngredients);
+                    if (data.customIngredients) setCustomIngredients(data.customIngredients);
+                    setIsInitializing(false);
+
+                    const lastSync = data.lastSyncTime || 0;
+                    if (now - lastSync < 24 * 60 * 60 * 1000) {
+                        needsDbSync = false;
+                        return; // 로컬 캐시 우선 적용시 Firestore 로컬 호출 생략
+                    }
+                }
+
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     if (data.ownedIngredients) setOwnedIngredients(data.ownedIngredients);
                     if (data.customIngredients) setCustomIngredients(data.customIngredients);
+                    // 최초 데이터 병합 저장
+                    localStorage.setItem('geniechef_user_data', JSON.stringify({
+                        ...data,
+                        ownedIngredients: data.ownedIngredients || initialIngredients.map(item => item.id),
+                        customIngredients: data.customIngredients || []
+                    }));
                 } else {
                     // 기본값: 모든 재료 보유
                     const allIds = initialIngredients.map(item => item.id);
                     setOwnedIngredients(allIds);
+                    localStorage.setItem('geniechef_user_data', JSON.stringify({ ownedIngredients: allIds, customIngredients: [], selectedIngredients: allIds }));
                 }
             } catch (error) {
                 console.error("Firestore 로드 에러:", error);
@@ -39,8 +65,21 @@ const Refrigerator = () => {
 
     useEffect(() => {
         if (isInitializing) return;
+        if (skipSaveRef.current) {
+            skipSaveRef.current = false;
+            return;
+        }
 
         const saveData = async () => {
+            // 화면 전환 속도를 향상시키기 위해 무조건 로컬 캐시 덮어쓰기
+            const cached = JSON.parse(localStorage.getItem('geniechef_user_data') || '{}');
+            const newData = { ...cached, ownedIngredients, customIngredients };
+            // 변경된 ownedIngredients에 맞춰 selectedIngredients도 필터링
+            if (newData.selectedIngredients) {
+                newData.selectedIngredients = newData.selectedIngredients.filter(id => ownedIngredients.includes(id));
+            }
+            localStorage.setItem('geniechef_user_data', JSON.stringify(newData));
+
             try {
                 await setDoc(userRef, { ownedIngredients, customIngredients, updatedAt: new Date() }, { merge: true });
             } catch (error) {
@@ -54,6 +93,31 @@ const Refrigerator = () => {
         setOwnedIngredients(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
+    };
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        try {
+            const docSnap = await getDoc(userRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.ownedIngredients) setOwnedIngredients(data.ownedIngredients);
+                if (data.customIngredients) setCustomIngredients(data.customIngredients);
+
+                // 로컬 스토리지 갱신 (마지막 동기화 시간도 업데이트)
+                const cachedStr = localStorage.getItem('geniechef_user_data');
+                const cachedData = cachedStr ? JSON.parse(cachedStr) : {};
+                localStorage.setItem('geniechef_user_data', JSON.stringify({
+                    ...cachedData,
+                    ...data,
+                    lastSyncTime: Date.now()
+                }));
+            }
+        } catch (error) {
+            console.error("Firestore 수동 동기화 에러:", error);
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const selectAllIngredients = () => {
@@ -102,7 +166,10 @@ const Refrigerator = () => {
                 <button onClick={() => navigate(-1)} className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-slate-900">arrow_back_ios_new</span>
                 </button>
-                <h1 className="text-lg font-bold tracking-tight text-center flex-1 pr-6">냉장고 관리</h1>
+                <h1 className="text-lg font-bold tracking-tight text-center flex-1">냉장고 관리</h1>
+                <button onClick={handleSync} disabled={isSyncing} className="flex items-center gap-1 text-primary active:scale-95 transition-transform disabled:opacity-50">
+                    <span className={`material-symbols-outlined font-bold text-xl ${isSyncing ? 'animate-spin cursor-not-allowed' : ''}`}>sync</span>
+                </button>
             </header>
 
             <main className="flex-1 overflow-y-auto px-4 pb-48">
@@ -176,18 +243,37 @@ const Refrigerator = () => {
                             <div className="flex flex-wrap gap-2">
                                 {items.map(item => {
                                     const isOwned = ownedIngredients.includes(item.id);
+                                    const isCustom = typeof item.id === 'string' && item.id.startsWith('custom_');
+
                                     return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => toggleIngredient(item.id)}
-                                            className={`flex h-10 items-center justify-center gap-x-2 rounded-full px-4 active:scale-95 transition-all shadow-sm ${isOwned
-                                                ? `border ${cat.borderClass} opacity-100`
-                                                : 'border border-dashed border-slate-300 bg-slate-200/50 text-slate-400 opacity-70 grayscale'
-                                                }`}
-                                        >
-                                            <span className="text-base">{item.icon || '🍽️'}</span>
-                                            <p className={`text-sm ${isOwned ? 'font-bold' : 'font-medium'}`}>{item.name}</p>
-                                        </button>
+                                        <div key={item.id} className="relative group flex items-center">
+                                            <button
+                                                onClick={() => toggleIngredient(item.id)}
+                                                className={`flex h-10 items-center justify-center gap-x-2 rounded-full px-4 active:scale-95 transition-all shadow-sm ${isOwned
+                                                    ? `border ${cat.borderClass} opacity-100`
+                                                    : 'border border-dashed border-slate-300 bg-slate-200/50 text-slate-400 opacity-70 grayscale'
+                                                    }`}
+                                            >
+                                                <span className="text-base">{item.icon || '🍽️'}</span>
+                                                <p className={`text-sm ${isOwned ? 'font-bold' : 'font-medium'}`}>{item.name}</p>
+                                            </button>
+
+                                            {/* 커스텀 식재료 삭제 버튼 (우상단 플로팅 아이콘) */}
+                                            {isCustom && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (window.confirm(`'${item.name}' 식재료를 삭제하시겠습니까?`)) {
+                                                            setCustomIngredients(prev => prev.filter(c => c.id !== item.id));
+                                                            setOwnedIngredients(prev => prev.filter(id => id !== item.id));
+                                                        }
+                                                    }}
+                                                    className="absolute -top-1 -right-1 size-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 shadow-sm transition-colors active:scale-90 opacity-80 z-10"
+                                                >
+                                                    <span className="material-symbols-outlined text-[12px] font-bold">close</span>
+                                                </button>
+                                            )}
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -213,28 +299,29 @@ const Refrigerator = () => {
                     쇼핑 리스트 생성하기
                 </button>
             </div>
-
-            <nav className="fixed bottom-0 w-full bg-white border-t border-slate-100 px-4 pb-8 pt-2 flex justify-around items-center z-50">
-                <button onClick={() => navigate('/')} className="flex flex-col items-center gap-1 text-slate-400">
-                    <span className="material-symbols-outlined">home</span>
-                    <p className="text-[10px] font-medium">홈</p>
-                </button>
-                <button onClick={() => navigate('/refrigerator')} className="flex flex-col items-center gap-1 text-primary">
-                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>kitchen</span>
-                    <p className="text-[10px] font-bold">냉장고</p>
-                </button>
-                <button onClick={() => navigate('/shopping-list')} className="flex flex-col items-center gap-1 text-slate-400">
-                    <span className="material-symbols-outlined">shopping_basket</span>
-                    <p className="text-[10px] font-medium">쇼핑</p>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                    <span className="material-symbols-outlined">person</span>
-                    <p className="text-[10px] font-medium">내 정보</p>
-                </button>
+            {/* 하단 공통 네비게이션 바 */}
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-6 pt-3 pb-8">
+                <div className="flex items-center justify-between">
+                    <button onClick={() => navigate('/')} className="flex flex-col items-center gap-1 text-slate-400">
+                        <span className="material-symbols-outlined">home</span>
+                        <p className="text-[10px] font-medium">추천식단</p>
+                    </button>
+                    <button onClick={() => navigate('/refrigerator')} className="flex flex-col items-center gap-1 text-primary">
+                        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>kitchen</span>
+                        <p className="text-[10px] font-bold">냉장고</p>
+                    </button>
+                    <button onClick={() => navigate('/shopping-list')} className="flex flex-col items-center gap-1 text-slate-400">
+                        <span className="material-symbols-outlined">shopping_basket</span>
+                        <p className="text-[10px] font-medium">쇼핑</p>
+                    </button>
+                    <button onClick={() => navigate('/history')} className="flex flex-col items-center gap-1 text-slate-400">
+                        <span className="material-symbols-outlined">history</span>
+                        <p className="text-[10px] font-medium">히스토리</p>
+                    </button>
+                </div>
             </nav>
         </div>
     );
 };
 
 export default Refrigerator;
-
