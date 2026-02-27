@@ -1,8 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { initialIngredients } from '../data/ingredients';
 
 const Refrigerator = () => {
     const navigate = useNavigate();
+    const [ownedIngredients, setOwnedIngredients] = useState([]);
+    const [isInitializing, setIsInitializing] = useState(true);
+
+    const userRef = doc(db, 'users', 'guest_user');
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists() && docSnap.data().ownedIngredients) {
+                    setOwnedIngredients(docSnap.data().ownedIngredients);
+                } else {
+                    // 기본값: 모든 재료 보유
+                    const allIds = initialIngredients.map(item => item.id);
+                    setOwnedIngredients(allIds);
+                }
+            } catch (error) {
+                console.error("Firestore 로드 에러:", error);
+                setOwnedIngredients(initialIngredients.map(item => item.id));
+            } finally {
+                setIsInitializing(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (isInitializing) return;
+
+        const saveData = async () => {
+            try {
+                await setDoc(userRef, { ownedIngredients, updatedAt: new Date() }, { merge: true });
+            } catch (error) {
+                console.warn("Firestore 저장 실패 (오프라인 상태)");
+            }
+        };
+        saveData();
+    }, [ownedIngredients, isInitializing]);
+
+    const toggleIngredient = (id) => {
+        setOwnedIngredients(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selectAllIngredients = () => {
+        const allIds = initialIngredients.map(item => item.id);
+        setOwnedIngredients(allIds);
+    };
+
+    const groupedIngredients = initialIngredients.reduce((acc, current) => {
+        if (!acc[current.category]) acc[current.category] = [];
+        acc[current.category].push(current);
+        return acc;
+    }, {});
+
+    const categories = [
+        { name: '냉장', icon: 'kitchen', colorClass: 'text-primary', borderClass: 'border-primary/20 bg-white text-slate-900', selectedIconColor: 'text-primary' },
+        { name: '냉동', icon: 'ac_unit', colorClass: 'text-blue-400', borderClass: 'border-blue-100 bg-white text-slate-900', selectedIconColor: 'text-blue-400' },
+        { name: '양념 및 소스', icon: 'liquor', colorClass: 'text-orange-400', borderClass: 'border-orange-100 bg-white text-slate-900', selectedIconColor: 'text-orange-400' },
+    ];
+
+    const lackCount = initialIngredients.length - ownedIngredients.length;
+    const isLack = lackCount > 0;
 
     return (
         <div className="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
@@ -19,103 +86,67 @@ const Refrigerator = () => {
                         <div className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-orange-500 text-xl font-bold">shopping_cart</span>
-                                <p className="text-slate-900 text-base font-bold leading-tight">식재료 3개 부족</p>
+                                <p className="text-slate-900 text-base font-bold leading-tight">
+                                    {isLack ? `식재료 ${lackCount}개 부족` : '모든 식재료 구비 완료'}
+                                </p>
                             </div>
-                            <p className="text-slate-500 text-xs font-normal">부족한 재료를 터치해 쇼핑 리스트에 담으세요.</p>
+                            <p className="text-slate-500 text-xs font-normal">
+                                {isLack ? '부족한 재료를 터치해 쇼핑 리스트에 담으세요.' : '냉장고가 꽉 차 있습니다! 든든하네요.'}
+                            </p>
                         </div>
                         <span className="material-symbols-outlined text-slate-400">chevron_right</span>
                     </div>
                 </div>
 
-                <section className="mt-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <span className="material-symbols-outlined text-primary">kitchen</span>
-                            냉장 <span className="text-sm font-normal text-slate-400">(6)</span>
-                        </h2>
-                        <button className="text-primary">
-                            <span className="material-symbols-outlined text-2xl">add_circle</span>
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-primary/20 bg-white text-slate-900 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-primary text-lg">egg</span>
-                            <p className="text-sm font-medium">달걀</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-primary/20 bg-white text-slate-900 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-primary text-lg">local_cafe</span>
-                            <p className="text-sm font-medium">우유</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-primary/20 bg-white text-slate-900 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-primary text-lg">set_meal</span>
-                            <p className="text-sm font-medium">두부</p>
-                        </div>
-                        <button className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-dashed border-slate-300 bg-slate-100 text-slate-400 px-4 active:scale-95 transition-transform group">
-                            <span className="material-symbols-outlined text-lg">eco</span>
-                            <p className="text-sm font-medium">샐러드 채소</p>
-                        </button>
-                        <button className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-dashed border-slate-300 bg-slate-100 text-slate-400 px-4 active:scale-95 transition-transform">
-                            <span className="material-symbols-outlined text-lg">restaurant</span>
-                            <p className="text-sm font-medium">닭가슴살</p>
-                        </button>
-                    </div>
-                </section>
+                <div className="mt-4 flex justify-end px-1">
+                    <button
+                        onClick={selectAllIngredients}
+                        disabled={!isLack}
+                        className={`text-sm font-bold flex items-center gap-1 px-4 py-2 rounded-xl transition-all shadow-sm ${isLack
+                                ? 'text-primary bg-primary/10 active:scale-95 cursor-pointer'
+                                : 'text-slate-400 bg-slate-100 opacity-70 cursor-not-allowed'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-[16px]">done_all</span> 전체 선택
+                    </button>
+                </div>
 
-                <section className="mt-10">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <span className="material-symbols-outlined text-blue-400">ac_unit</span>
-                            냉동 <span className="text-sm font-normal text-slate-400">(3)</span>
-                        </h2>
-                        <button className="text-primary">
-                            <span className="material-symbols-outlined text-2xl">add_circle</span>
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-blue-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-blue-400 text-lg">lunch_dining</span>
-                            <p className="text-sm font-medium">냉동 만두</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-blue-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-blue-400 text-lg">icecream</span>
-                            <p className="text-sm font-medium">아이스크림</p>
-                        </div>
-                        <button className="flex h-10 items-center justify-center gap-x-2 rounded-full border border-dashed border-slate-300 bg-slate-100 text-slate-400 px-4 active:scale-95 transition-transform">
-                            <span className="material-symbols-outlined text-lg">flatware</span>
-                            <p className="text-sm font-medium">볶음밥</p>
-                        </button>
-                    </div>
-                </section>
+                {categories.map(cat => {
+                    const items = groupedIngredients[cat.name] || [];
+                    const ownedCount = items.filter(item => ownedIngredients.includes(item.id)).length;
 
-                <section className="mt-10">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <span className="material-symbols-outlined text-orange-400">liquor</span>
-                            양념/소스 <span className="text-sm font-normal text-slate-400">(4)</span>
-                        </h2>
-                        <button className="text-primary">
-                            <span className="material-symbols-outlined text-2xl">add_circle</span>
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-orange-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-orange-400 text-lg">opacity</span>
-                            <p className="text-sm font-medium">진간장</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-orange-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-orange-400 text-lg">oil_barrel</span>
-                            <p className="text-sm font-medium">참기름</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-orange-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-orange-400 text-lg">grain</span>
-                            <p className="text-sm font-medium">설탕</p>
-                        </div>
-                        <div className="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white border border-orange-100 px-4 shadow-sm">
-                            <span className="material-symbols-outlined text-orange-400 text-lg">science</span>
-                            <p className="text-sm font-medium">올리브유</p>
-                        </div>
-                    </div>
-                </section>
+                    return (
+                        <section className="mt-8" key={cat.name}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <span className={`material-symbols-outlined ${cat.colorClass}`}>{cat.icon}</span>
+                                    {cat.name} <span className="text-sm font-normal text-slate-400">({ownedCount})</span>
+                                </h2>
+                                <button className="text-primary">
+                                    <span className="material-symbols-outlined text-2xl">add_circle</span>
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {items.map(item => {
+                                    const isOwned = ownedIngredients.includes(item.id);
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => toggleIngredient(item.id)}
+                                            className={`flex h-10 items-center justify-center gap-x-2 rounded-full px-4 active:scale-95 transition-all shadow-sm ${isOwned
+                                                ? `border ${cat.borderClass} opacity-100`
+                                                : 'border border-dashed border-slate-300 bg-slate-200/50 text-slate-400 opacity-70 grayscale'
+                                                }`}
+                                        >
+                                            <span className="text-base">{item.icon || '🍽️'}</span>
+                                            <p className={`text-sm ${isOwned ? 'font-bold' : 'font-medium'}`}>{item.name}</p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    );
+                })}
 
                 <div className="mt-10 p-4 rounded-xl bg-primary/10 border border-primary/20">
                     <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-2 text-sm">
@@ -123,7 +154,8 @@ const Refrigerator = () => {
                         AI 식재료 팁
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
-                        현재 <span className="font-bold text-primary">달걀</span>의 유통기한이 3일 남았습니다. 달걀말이나 스크램블 에그를 추천드려요!
+                        현재 냉장고에 <span className="font-bold text-primary">{ownedIngredients.length}개</span>의 식재료가 있습니다.
+                        신선도를 위해 유통기한이 짧은 재료부터 먼저 사용하시는 것을 권장합니다!
                     </p>
                 </div>
             </main>
@@ -158,3 +190,4 @@ const Refrigerator = () => {
 };
 
 export default Refrigerator;
+
