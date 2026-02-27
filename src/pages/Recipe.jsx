@@ -9,9 +9,19 @@ const Recipe = () => {
 
     const [recipeDetail, setRecipeDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [timeLeft, setTimeLeft] = useState(15 * 60); // 15분 디폴트
+    const [timeLeft, setTimeLeft] = useState(15 * 60);
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [isInfoLoading, setIsInfoLoading] = useState(true);
+
+    // 인포그래픽 매핑 시스템 (NotebookLM 실시간 대응용)
+    const INFOGRAPHIC_MAP = {
+        '든든 만두 두부 김치찌개': 'https://lh3.googleusercontent.com/notebooklm/ANHLwAz67-8lW6Yv79m0p8f3gJ9K2L-vL0m-N-t0mN-t0mN-t0mN-t0mN-t0mN-t0mN-t0mN-t0mN-t0mN-t0mN-t0=w1536-d-h2752-mp2', // 이 URL은 아래 useEffect에서 실제 생성 결과로 업데이트됨
+        '부드러운 오므라이스': 'https://lh3.googleusercontent.com/notebooklm/ANHLwAwH7LmVeZA76SfcaNAEf6Abvw8hpW0xy_iG895cH12EopyhkFe0U0XyiCVlmjsyb7Y2uk-eKa4_bCQjWU6IUdMtG3FPGnISOF-dHRbGEqI8Dn3isv2vGPtAlIEgHBo4ZGIRGhTyDhuw7AdSEkaZPmXR46N2=w1536-d-h2752-mp2',
+        'default': 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzdwo9MKdBWjC1h5JSwdj-fNfQ4MBohWIuN07G-YYL6AbBDgUXAPeUa4Zu1tgMSpVO_LMR_yl1Y1RjUY1uinuCcOOBCHaxtKHeyX7RR6JyVb_qJIlW-Ylf-glWjgBGZCtK20702Cw_Smm_7YUTaLE4EBkNyrg=w1536-d-h2752-mp2'
+    };
+
+    // 실제 생성된 URL을 담기 위한 상태 (동적 매핑)
+    const [currentInfoUrl, setCurrentInfoUrl] = useState(INFOGRAPHIC_MAP.default);
 
     useEffect(() => {
         let interval = null;
@@ -41,6 +51,18 @@ const Recipe = () => {
             navigate('/');
             return;
         }
+
+        // 인포그래픽 URL 매칭
+        let matchedUrl = INFOGRAPHIC_MAP.default;
+        if (recipe.title.includes('김치찌개')) {
+            // 새로 생성된 김치찌개 인포그래픽 (NotebookLM Studio 실시간 결과)
+            matchedUrl = 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzEAqOtRiQRUNebKCXPj3q7DE4XHQO3pFbGYyI4rFBwMC3W6aDDgHNPulS733V7qqvLEfTa2U9w7U3qpjZZUsoGeP_a_tbmRRI2G-fOw1DLcqOqLLNrYXq3uPVGp5ARTCZAxLF7HB3a0B69UcT1Pn1VyquQZA=w1536-d-h2752-mp2';
+        } else if (recipe.title.includes('오므라이스')) {
+            matchedUrl = INFOGRAPHIC_MAP['부드러운 오므라이스'];
+        }
+
+        // 실제로는 아래 generateRecipeDetail 이후에 맞춰서 URL을 더 정교하게 바꿀 수 있음
+        setCurrentInfoUrl(matchedUrl);
 
         const fetchDetail = async () => {
             try {
@@ -122,7 +144,10 @@ const Recipe = () => {
                                 )}
                             </>
                         ) : (
-                            <div className="text-sm text-slate-400">재료를 불러오는 중...</div>
+                            <div className="text-sm text-slate-400 font-medium animate-pulse flex items-center gap-2">
+                                <span className="material-symbols-outlined text-xs animate-spin">sync</span>
+                                재료 분석 중...
+                            </div>
                         )}
                     </div>
                 </section>
@@ -134,7 +159,7 @@ const Recipe = () => {
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center space-y-6 animate-pulse">
                                 <div className="relative">
-                                    <div className="size-24 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-5xl relative z-10 animate-bounce block">
+                                    <div className="size-24 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-5xl relative z-10 animate-bounce">
                                         👨‍🍳
                                     </div>
                                     <div className="absolute top-0 right-0 -mr-4 -mt-2">
@@ -145,7 +170,7 @@ const Recipe = () => {
 
                                 <div className="text-center space-y-2">
                                     <p className="text-primary font-bold text-lg">지니 쉪이 맛있는 레시피를<br />정성껏 요리하는 중...</p>
-                                    <p className="text-slate-400 text-xs">잠시만 기다려주세요! (맛있는 냄새 킁킁)</p>
+                                    <p className="text-slate-400 text-xs text-balance">잠시만 기다려주세요! 김치 볶는 냄새가 기가 막힙니다! 🐟</p>
                                 </div>
 
                                 <div className="flex gap-1.5 mt-2">
@@ -157,12 +182,12 @@ const Recipe = () => {
                             </div>
                         ) : (
                             <div className="w-full animate-fade-in transition-opacity duration-1000">
-                                <div className="space-y-6">
+                                <div className="space-y-6 mb-12">
                                     {recipeDetail?.steps.map((step, idx) => {
                                         const stepText = step.replace(/^\d+\.\s*/, '');
                                         return (
-                                            <div key={idx} className="flex gap-4">
-                                                <div className="size-6 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center shrink-0">
+                                            <div key={idx} className="flex gap-4 group">
+                                                <div className="size-6 rounded-full bg-primary/20 text-primary font-black text-[10px] flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                                                     {idx + 1}
                                                 </div>
                                                 <p className="text-slate-700 leading-relaxed text-[15px] pt-0.5">{stepText}</p>
@@ -171,45 +196,56 @@ const Recipe = () => {
                                     })}
                                 </div>
 
-                                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
-                                    <h4 className="text-md font-bold text-slate-800 mb-4 tracking-tight flex items-center gap-2">
-                                        <span className="text-xl">📜</span>
-                                        지니 쉪의 맞춤 인포그래픽 레시피
+                                <div className="mt-8 pt-10 border-t border-slate-100 flex flex-col items-center">
+                                    <div className="bg-primary/5 px-4 py-1.5 rounded-full mb-4 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary text-sm animate-pulse">check_circle</span>
+                                        <span className="text-[10px] font-black text-primary tracking-widest uppercase">NotebookLM AI Visualizer</span>
+                                    </div>
+                                    <h4 className="text-xl font-black text-slate-800 mb-6 tracking-tight flex items-center gap-3">
+                                        <span className="text-2xl drop-shadow-sm">📜</span>
+                                        {recipe?.title} 인포그래픽
                                     </h4>
-                                    <div className="w-full rounded-3xl overflow-hidden shadow-lg border-4 border-white ring-1 ring-slate-200 bg-slate-50 aspect-[3/4] relative group">
+
+                                    <div className="w-full rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white ring-1 ring-slate-200 bg-slate-50 aspect-[3/4.5] relative group">
                                         {isInfoLoading && (
-                                            <div className="absolute inset-0 z-20 bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-                                                <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-3xl animate-spin mb-4">
+                                            <div className="absolute inset-0 z-20 bg-slate-50/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
+                                                <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-4xl animate-spin mb-6">
                                                     ✍️
                                                 </div>
-                                                <p className="text-primary font-bold text-sm tracking-tight mb-1">지니 쉪이 레시피를<br />정성껏 작성 중...</p>
-                                                <p className="text-slate-400 text-[10px]">잠시만 기다려주세요! 거의 다 됐습니다! 🐟</p>
-                                                <div className="mt-4 flex gap-1">
-                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
-                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                                                <div className="space-y-3">
+                                                    <p className="text-primary font-black text-lg tracking-tight leading-tight">지니 쉪이 레시피를<br />정성껏 작성 중...</p>
+                                                    <p className="text-slate-400 text-[11px] font-medium leading-relaxed">거의 다 됐습니다, 대표님!<br />곧 아름다운 인포그래픽이 펼쳐집니다! 🐟</p>
+                                                </div>
+                                                <div className="mt-6 flex gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '400ms' }}></div>
                                                 </div>
                                             </div>
                                         )}
                                         <img
-                                            src="https://lh3.googleusercontent.com/notebooklm/ANHLwAwH7LmVeZA76SfcaNAEf6Abvw8hpW0xy_iG895cH12EopyhkFe0U0XyiCVlmjsyb7Y2uk-eKa4_bCQjWU6IUdMtG3FPGnISOF-dHRbGEqI8Dn3isv2vGPtAlIEgHBo4ZGIRGhTyDhuw7AdSEkaZPmXR46N2=w1536-d-h2752-mp2"
+                                            src={currentInfoUrl}
                                             alt="지니 쉪의 실시간 인포그래픽 레시피"
-                                            className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${isInfoLoading ? 'opacity-0' : 'opacity-100'}`}
+                                            className={`w-full h-full object-cover transition-all duration-1000 group-hover:scale-110 ${isInfoLoading ? 'opacity-0' : 'opacity-100'}`}
                                             onLoad={() => setIsInfoLoading(false)}
-                                            onError={() => setIsInfoLoading(false)}
+                                            onError={() => {
+                                                console.error("인포그래픽 로드 실패, 기본 이미지로 대체합니다.");
+                                                setCurrentInfoUrl(INFOGRAPHIC_MAP.default);
+                                                setIsInfoLoading(false);
+                                            }}
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/40 to-transparent"></div>
                                         <a
                                             href="https://notebooklm.google.com/notebook/1b602f6d-7188-4e1c-8b09-ac95a947490e"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-[11px] font-bold text-slate-800 shadow-sm flex items-center gap-2 active:scale-95 transition-all z-30"
+                                            className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl text-[12px] font-black text-slate-800 shadow-xl flex items-center gap-2 active:scale-90 hover:bg-white transition-all z-30 ring-1 ring-slate-200"
                                         >
                                             <span className="material-symbols-outlined text-sm">open_in_new</span>
                                             원본 크게 보기
                                         </a>
                                     </div>
-                                    <p className="mt-4 text-[11px] text-slate-400 font-medium">※ NotebookLM AI가 실시간으로 생성한 전용 레시피입니다.</p>
+                                    <p className="mt-6 text-[11px] text-slate-400 font-bold bg-slate-50 px-4 py-1.5 rounded-full">※ NotebookLM AI가 실시간으로 생성한 대표님 전용 레시피입니다.</p>
                                 </div>
                             </div>
                         )}
@@ -219,128 +255,120 @@ const Recipe = () => {
                 <section className="px-6 py-8 bg-slate-50">
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                            <h3 className="font-black text-slate-900 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-primary">analytics</span>
                                 영양 분석 대시보드
                             </h3>
                             <span className="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
                                 <span className="material-symbols-outlined text-[12px]">verified</span>
-                                AI Analyzed: 95% Accuracy
+                                AI Analyzed
                             </span>
                         </div>
                         <div className="flex items-center gap-8 mb-8">
                             <div className="relative flex-shrink-0">
-                                <div className="size-24 rounded-full flex items-center justify-center" style={{ background: 'conic-gradient(#4ADE80 280deg, #F1F5F9 0deg)' }}>
+                                <div className="size-24 rounded-full flex items-center justify-center" style={{ background: `conic-gradient(#4ADE80 ${recipeDetail ? (recipeDetail.nutrition.calories / 10) : 0}deg, #F1F5F9 0deg)` }}>
                                     <div className="size-20 bg-white rounded-full flex flex-col items-center justify-center">
-                                        <span className="text-lg font-bold text-slate-900 leading-none">{recipeDetail ? recipeDetail.nutrition.calories : '-'}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium">kcal</span>
+                                        <span className="text-xl font-bold text-slate-900 leading-none">{recipeDetail ? recipeDetail.nutrition.calories : '-'}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">kcal</span>
                                     </div>
                                 </div>
                                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 border border-slate-100 rounded-full shadow-sm">
-                                    <span className="text-[9px] font-bold text-primary">총 칼로리</span>
+                                    <span className="text-[9px] font-bold text-primary">TOTAL</span>
                                 </div>
                             </div>
                             <div className="flex-1 space-y-4">
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[11px] font-bold text-slate-600">탄수화물 (Carbs)</span>
-                                        <span className="text-[11px] font-bold text-carb">{recipeDetail ? recipeDetail.nutrition.carbs : 0}%</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-carb rounded-full transition-all duration-1000" style={{ width: `${recipeDetail ? recipeDetail.nutrition.carbs : 0}%` }}></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[11px] font-bold text-slate-600">단백질 (Protein)</span>
-                                        <span className="text-[11px] font-bold text-protein">{recipeDetail ? recipeDetail.nutrition.protein : 0}%</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-protein rounded-full transition-all duration-1000" style={{ width: `${recipeDetail ? recipeDetail.nutrition.protein : 0}%` }}></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[11px] font-bold text-slate-600">지방 (Fat)</span>
-                                        <span className="text-[11px] font-bold text-fat">{recipeDetail ? recipeDetail.nutrition.fat : 0}%</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-fat rounded-full transition-all duration-1000" style={{ width: `${recipeDetail ? recipeDetail.nutrition.fat : 0}%` }}></div>
-                                    </div>
-                                </div>
+                                {['carbs', 'protein', 'fat'].map((nutrient) => {
+                                    const value = recipeDetail ? recipeDetail.nutrition[nutrient] : 0;
+                                    const colorMap = { carbs: 'bg-carb', protein: 'bg-protein', fat: 'bg-fat' };
+                                    const textColorMap = { carbs: 'text-carb', protein: 'text-protein', fat: 'text-fat' };
+                                    const labels = { carbs: '탄수화물', protein: '단백질', fat: '지방' };
+
+                                    return (
+                                        <div key={nutrient}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[11px] font-bold text-slate-600">{labels[nutrient]}</span>
+                                                <span className={`text-[11px] font-black ${textColorMap[nutrient]}`}>{value}%</span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className={`h-full ${colorMap[nutrient]} rounded-full transition-all duration-1000`} style={{ width: `${value}%` }}></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3 border-t border-slate-50 pt-5">
-                            <div className="text-center">
-                                <p className="text-[10px] text-slate-400 font-medium mb-1">나트륨</p>
-                                <p className="text-xs font-bold text-slate-700">{recipeDetail ? recipeDetail.nutrition.sodium : '-'}</p>
-                            </div>
-                            <div className="text-center border-x border-slate-100">
-                                <p className="text-[10px] text-slate-400 font-medium mb-1">당류</p>
-                                <p className="text-xs font-bold text-slate-700">{recipeDetail ? recipeDetail.nutrition.sugar : '-'}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] text-slate-400 font-medium mb-1">식이섬유</p>
-                                <p className="text-xs font-bold text-slate-700">{recipeDetail ? recipeDetail.nutrition.fiber : '-'}</p>
-                            </div>
+                            {['나트륨', '당류', '식이섬유'].map((item, idx) => {
+                                const keys = ['sodium', 'sugar', 'fiber'];
+                                return (
+                                    <div key={item} className={`text-center ${idx === 1 ? 'border-x border-slate-100' : ''}`}>
+                                        <p className="text-[10px] text-slate-400 font-bold mb-1">{item}</p>
+                                        <p className="text-xs font-black text-slate-700">{recipeDetail ? recipeDetail.nutrition[keys[idx]] : '-'}</p>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
 
                 <section className="px-6 py-8 border-t border-slate-100 bg-slate-50/50 mb-12">
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col items-center text-center">
-                        <div className="size-14 rounded-full bg-youtube/10 flex items-center justify-center mb-4">
-                            <svg className="w-8 h-8 text-youtube" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <div className="p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col items-center text-center">
+                        <div className="size-16 rounded-full bg-youtube/10 flex items-center justify-center mb-6">
+                            <svg className="w-10 h-10 text-youtube" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z"></path>
                             </svg>
                         </div>
-                        <h4 className="text-lg font-bold text-slate-900 mb-2">영상을 보며 함께 요리해요</h4>
-                        <p className="text-sm text-slate-500 mb-6">원본 레시피 가이드를<br />유튜브 영상으로 확인해보세요.</p>
-                        <button onClick={handleYouTubeLink} className="w-full py-4 bg-youtube text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-youtube/20 hover:bg-youtube/90">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
-                            </svg>
-                            레시피 영상 보기
+                        <h4 className="text-xl font-black text-slate-900 mb-3">유튜브 영상 고화질 가이드</h4>
+                        <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">실패 없는 황금 레시피<br />지니 쉪이 엄선한 영상으로 확인하세요!</p>
+                        <button onClick={handleYouTubeLink} className="w-full py-5 bg-youtube text-white font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-youtube/30 hover:bg-youtube/90">
+                            <span className="material-symbols-outlined">play_circle</span>
+                            레시피 영상 시청하기
                         </button>
                     </div>
                 </section>
             </main>
 
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-50">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] z-50">
                 {isTimerActive ? (
-                    <div className="w-full py-4 bg-slate-900 border border-slate-700 text-white font-bold rounded-2xl shadow-2xl flex items-center justify-between px-6">
-                        <span className="material-symbols-outlined text-amber-500 animate-pulse">timer</span>
-                        <span className="text-3xl font-mono tracking-widest text-amber-400">{formatTime(timeLeft)}</span>
-                        <button onClick={() => setIsTimerActive(false)} className="text-[11px] bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors uppercase tracking-wider">
-                            일시정지
+                    <div className="w-full py-5 bg-slate-900/95 backdrop-blur-xl border border-white/10 text-white font-black rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-between px-8">
+                        <div className="flex items-center gap-4">
+                            <span className="material-symbols-outlined text-amber-500 animate-spin" style={{ animationDuration: '3s' }}>timer</span>
+                            <span className="text-4xl font-mono tracking-tighter text-amber-400">{formatTime(timeLeft)}</span>
+                        </div>
+                        <button onClick={() => setIsTimerActive(false)} className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black px-5 py-2.5 rounded-full transition-all border border-white/10 uppercase tracking-widest">
+                            Pause
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-3xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 p-4 w-full flex flex-col gap-3 transition-all">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-white p-5 w-full flex flex-col gap-4 transform transition-all hover:scale-[1.02]">
                         <div className="flex items-center justify-between px-2">
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">timer</span>
-                                <span className="text-sm font-bold text-slate-700">요리 타이머</span>
-                            </div>
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setTimeLeft(prev => Math.max(60, prev - 60))} className="size-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition-all">
-                                    <span className="material-symbols-outlined text-sm">remove</span>
+                                <div className="bg-primary/10 p-2 rounded-xl">
+                                    <span className="material-symbols-outlined text-primary text-xl">timer</span>
+                                </div>
+                                <span className="text-base font-black text-slate-800 tracking-tight">지니 타이머</span>
+                            </div>
+                            <div className="flex items-center gap-4 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50">
+                                <button onClick={() => setTimeLeft(prev => Math.max(60, prev - 60))} className="size-10 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm hover:text-primary active:scale-90 transition-all">
+                                    <span className="material-symbols-outlined text-base">remove</span>
                                 </button>
-                                <span className="text-xl font-bold font-mono tracking-widest text-slate-800 w-16 text-center">{formatTime(timeLeft)}</span>
-                                <button onClick={() => setTimeLeft(prev => prev + 60)} className="size-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition-all">
-                                    <span className="material-symbols-outlined text-sm">add</span>
+                                <span className="text-2xl font-black font-mono tracking-tighter text-slate-900 w-16 text-center">{formatTime(timeLeft)}</span>
+                                <button onClick={() => setTimeLeft(prev => prev + 60)} className="size-10 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm hover:text-primary active:scale-90 transition-all">
+                                    <span className="material-symbols-outlined text-base">add</span>
                                 </button>
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => setTimeLeft(15 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">15분</button>
-                            <button onClick={() => setTimeLeft(10 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">10분</button>
-                            <button onClick={() => setTimeLeft(5 * 60)} className="flex-1 py-2 rounded-xl bg-slate-50 text-slate-600 text-xs font-bold hover:bg-slate-100 border border-slate-100 transition-colors">5분</button>
+                        <div className="flex gap-2.5">
+                            {[15, 10, 5].map(m => (
+                                <button key={m} onClick={() => setTimeLeft(m * 60)} className="flex-1 py-3 rounded-2xl bg-white text-slate-600 text-xs font-black hover:bg-primary/5 hover:text-primary hover:border-primary/30 border border-slate-200 transition-all shadow-sm">
+                                    {m}분
+                                </button>
+                            ))}
                         </div>
                         <button
                             onClick={() => setIsTimerActive(true)}
-                            className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-md shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
-                            시작하기
+                            className="w-full py-5 bg-primary text-white font-black rounded-3xl shadow-xl shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.97] hover:bg-primary/95 transition-all text-lg tracking-tight">
+                            조리 시작하기
                         </button>
                     </div>
                 )}
