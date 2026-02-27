@@ -83,7 +83,12 @@ const Home = () => {
           updatedAt: new Date()
         });
       } catch (error) {
-        console.error("Firestore 저장 에러:", error);
+        // [땡칠이 팀장 방어 로직] 오프라인일 때는 조용히 넘어갑니다. 🤫
+        if (error.code === 'unavailable' || error.message.includes('offline')) {
+          console.warn("Firestore 저장 실패 (오프라인 상테): 로컬 모드로 동작합니다. 🫡");
+        } else {
+          console.error("Firestore 저장 에러:", error);
+        }
       }
     };
     saveData();
