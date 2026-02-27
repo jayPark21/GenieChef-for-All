@@ -172,12 +172,24 @@ const Recipe = () => {
                                     })}
                                 </div>
 
-                                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
-                                    <h4 className="text-md font-bold text-slate-800 mb-4">지니 쉪의 레시피 요약 (Infographic) 📜</h4>
-                                    <div className="w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
-                                        <img src="https://lh3.googleusercontent.com/notebooklm/ANHLwAyrr0HcGM-1iHTGT5elx0eOBnKmuvzVGDfSUIIeUMDtwV3pRudvSwmQE2BbFuASayWgU1d6I4PTt9BoAnt6Ki0wdevroQNUcNetPkCYZfu2Dz3Ud3wzvXESzuq771DrX7TxuiaCpwK5AoFrqc-DbKxXeVxNGw=w1536-d-h2752-mp2" alt="레시피 인포그래픽" className="w-full h-auto object-contain" />
+                                {recipeDetail?.tip && (
+                                    <div className="mt-8 pt-6 border-t border-slate-100">
+                                        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                                <span className="material-symbols-outlined text-6xl text-amber-500">lightbulb</span>
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">💡</span>
+                                                    <h4 className="text-sm font-bold text-amber-900">지니 쉪의 특별한 꿀팁</h4>
+                                                </div>
+                                                <p className="text-sm text-amber-800 leading-relaxed font-medium break-keep">
+                                                    {recipeDetail.tip}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         )}
                     </div>
