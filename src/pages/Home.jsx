@@ -202,7 +202,7 @@ const Home = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <span className="material-symbols-outlined text-blue-400">kitchen</span>
-                마이 냉장고 식재료
+                내 냉장고 식재료
               </h2>
               <button onClick={() => navigate('/refrigerator')} className="text-xs font-semibold text-slate-400 flex items-center gap-1 py-1 px-2 bg-slate-100 rounded-lg">
                 <span className="material-symbols-outlined text-[14px]">edit</span>
@@ -336,7 +336,7 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <button onClick={() => navigate('/')} className="flex flex-col items-center gap-1 text-primary">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-            <p className="text-[10px] font-bold">홈</p>
+            <p className="text-[10px] font-bold">추천식단</p>
           </button>
           <button onClick={() => navigate('/refrigerator')} className="flex flex-col items-center gap-1 text-slate-400">
             <span className="material-symbols-outlined">kitchen</span>

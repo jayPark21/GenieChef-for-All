@@ -83,6 +83,32 @@ export const recommendRecipes = async (ingredients, dietMode) => {
     }
 };
 
+// 3. 인포그래픽 실시간 상태 체크 (NotebookLM Polling Simulator)
+// 실제 환경에서는 백엔드 API를 호출하지만, 데모를 위해 리얼하게 동작하도록 구성
+export const checkInfographicStatus = async (recipeTitle) => {
+    // 인물(땡칠이)이 인지하는 실제 데이터 (NotebookLM Studio ID: bc9897ff)
+    // 실제 생성 시간이 걸리므로 5초 주기로 호출될 때마다 시각적으로 단계를 보여줌
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // 특정 시점 이후에만 완료 상태 반환 (리얼함 강조)
+            const isCompleted = Math.random() > 0.7; // 30% 확률로 완료 (수차례 폴링 유도)
+
+            if (isCompleted && recipeTitle.includes('김치찌개')) {
+                resolve({
+                    completed: true,
+                    url: 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzEAqOtRiQRUNebKCXPj3q7DE4XHQO3pFbGYyI4rFBwMC3W6aDDgHNPulS733V7qqvLEfTa2U9w7U3qpjZZUsoGeP_a_tbmRRI2G-fOw1DLcqOqLLNrYXq3uPVGp5ARTCZAxLF7HB3a0B69UcT1Pn1VyquQZA=w1536-d-h2752-mp2',
+                    message: "Genie Chef has finished your recipe infographic! 🐟"
+                });
+            } else {
+                resolve({
+                    completed: false,
+                    message: "Still creating the masterpiece... please wait! ✍️"
+                });
+            }
+        }, 800);
+    });
+};
+
 export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode) => {
     if (!genAI) {
         throw new Error("Gemini API 키가 설정되지 않았습니다.");
