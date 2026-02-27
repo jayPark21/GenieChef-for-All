@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4799eb",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-primary/10">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" style="">
+<span class="material-symbols-outlined" style="">arrow_back_ios_new</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight" style="">식재료 쇼핑 리스트</h1>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" style="">
+<span class="material-symbols-outlined" style="">more_horiz</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto">
+<div class="p-4">
+<div class="relative overflow-hidden rounded-xl h-48 flex flex-col justify-end p-6 bg-primary/20" style="background-image: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent), url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuD1cgmLAgLUa5TyBqC8sVvIYFeLmCIwfS0vO2lQsxUAnpRcKvgb8k62nhApPZRHVO2y23WhsbmWSZ7Oicn6Vx3u8mH9iuZQASor_4Fmr9M5FEEHSsdOpCIlTZttJhqAeGnOZnsZ-POga89pkCq6Ki2U61Iqp4eGcFZYp8arTfb3T2xuRVqUwodZSM5UUz9BNM3C1pTh97URcxmLwlt_J7WaofCGZ67tcrdfUupJHF9_-EbcBAJgGDX3ijoxDhfiXVaQxmWZdi1qrEs\&quot;&quot;); background-size: cover; background-position: center center;">
+<h2 class="text-white text-2xl font-bold leading-tight" style="">다음 요리를 위해 부족한 재료들이에요!</h2>
+</div>
+</div>
+<div class="px-4 mb-6">
+<div class="flex gap-2 p-1 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-primary/5">
+<button class="flex-1 py-2 px-4 bg-primary text-white rounded-full font-semibold text-sm transition-all" style="">식재료</button>
+<button class="flex-1 py-2 px-4 text-slate-500 dark:text-slate-400 font-semibold text-sm hover:bg-primary/5 rounded-full transition-all" style="">냉동</button>
+<button class="flex-1 py-2 px-4 text-slate-500 dark:text-slate-400 font-semibold text-sm hover:bg-primary/5 rounded-full transition-all" style="">양념/소스</button>
+</div>
+</div>
+<div class="px-4 space-y-4 pb-32">
+<h3 class="text-sm font-bold text-primary uppercase tracking-wider ml-1" style="">신선 식품</h3>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm border border-primary/5">
+<div class="flex items-center justify-center">
+<input class="size-6 rounded border-primary/30 text-primary focus:ring-primary bg-background-light dark:bg-slate-700" type="checkbox">
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100" style="">신선 시금치</p>
+<p class="text-xs text-slate-500 dark:text-slate-400" style="">파스타 필수 재료</p>
+</div>
+<div class="flex items-center gap-3 bg-background-light dark:bg-slate-700 rounded-full p-1">
+<button class="size-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-600 shadow-sm text-primary" style="">
+<span class="material-symbols-outlined text-sm" style="">remove</span>
+</button>
+<span class="text-sm font-bold w-4 text-center" style="">2</span>
+<button class="size-7 flex items-center justify-center rounded-full bg-primary shadow-sm text-white" style="">
+<span class="material-symbols-outlined text-sm" style="">add</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm border border-primary/5">
+<div class="flex items-center justify-center">
+<input class="size-6 rounded border-primary/30 text-primary focus:ring-primary bg-background-light dark:bg-slate-700" type="checkbox">
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100" style="">방울토마토</p>
+<p class="text-xs text-slate-500 dark:text-slate-400" style="">1팩 (250g)</p>
+</div>
+<div class="flex items-center gap-3 bg-background-light dark:bg-slate-700 rounded-full p-1">
+<button class="size-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-600 shadow-sm text-primary" style="">
+<span class="material-symbols-outlined text-sm" style="">remove</span>
+</button>
+<span class="text-sm font-bold w-4 text-center" style="">1</span>
+<button class="size-7 flex items-center justify-center rounded-full bg-primary shadow-sm text-white" style="">
+<span class="material-symbols-outlined text-sm" style="">add</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm border border-primary/5 opacity-60">
+<div class="flex items-center justify-center">
+<input checked="" class="size-6 rounded border-primary/30 text-primary focus:ring-primary bg-background-light dark:bg-slate-700" type="checkbox">
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100 line-through" style="">우유 (1L)</p>
+<p class="text-xs text-slate-500 dark:text-slate-400" style="">1팩</p>
+</div>
+<div class="flex items-center gap-3 bg-background-light dark:bg-slate-700 rounded-full p-1">
+<button class="size-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-600 shadow-sm text-primary" style="">
+<span class="material-symbols-outlined text-sm" style="">remove</span>
+</button>
+<span class="text-sm font-bold w-4 text-center" style="">1</span>
+<button class="size-7 flex items-center justify-center rounded-full bg-primary shadow-sm text-white" style="">
+<span class="material-symbols-outlined text-sm" style="">add</span>
+</button>
+</div>
+</div>
+<h3 class="text-sm font-bold text-primary uppercase tracking-wider ml-1 mt-6" style="">양념 및 기타</h3>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm border border-primary/5">
+<div class="flex items-center justify-center">
+<input class="size-6 rounded border-primary/30 text-primary focus:ring-primary bg-background-light dark:bg-slate-700" type="checkbox">
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100" style="">올리브유</p>
+<p class="text-xs text-slate-500 dark:text-slate-400" style="">엑스트라 버진</p>
+</div>
+<div class="flex items-center gap-3 bg-background-light dark:bg-slate-700 rounded-full p-1">
+<button class="size-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-600 shadow-sm text-primary" style="">
+<span class="material-symbols-outlined text-sm" style="">remove</span>
+</button>
+<span class="text-sm font-bold w-4 text-center" style="">1</span>
+<button class="size-7 flex items-center justify-center rounded-full bg-primary shadow-sm text-white" style="">
+<span class="material-symbols-outlined text-sm" style="">add</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 z-20">
+<div class="px-4 pb-4 flex gap-3">
+<button class="flex-1 h-14 bg-white dark:bg-slate-800 border-2 border-primary/20 rounded-xl flex items-center justify-center gap-2 font-bold shadow-lg text-primary" style="">
+<span class="material-symbols-outlined" style="">content_copy</span>
+                복사하기
+            </button>
+<button class="flex-[2] h-14 bg-primary text-white rounded-xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-primary/30" style="">
+<span class="material-symbols-outlined" style="">shopping_cart_checkout</span>
+                마트로 전송
+            </button>
+</div>
+<nav class="bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-primary/10 flex justify-around items-center pt-3 pb-8 px-2">
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#" style="">
+<span class="material-symbols-outlined" style="">kitchen</span>
+<span class="text-[10px] font-medium" style="">냉장고</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#" style="">
+<span class="material-symbols-outlined" style="">menu_book</span>
+<span class="text-[10px] font-medium" style="">레시피</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#" style="">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">shopping_basket</span>
+<span class="text-[10px] font-bold" style="">쇼핑</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#" style="">
+<span class="material-symbols-outlined" style="">person</span>
+<span class="text-[10px] font-medium" style="">프로필</span>
+</a>
+</nav>
+</div>
+
+</body></html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>쇼핑 리스트 연동 냉장고 뷰</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102210",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+        .ios-shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .out-of-stock {
+            @apply border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/20 text-slate-400;
+        }
+        .in-stock {
+            @apply border-solid border-primary/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-primary/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">settings</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight text-center flex-1">냉장고 관리</h1>
+<div class="flex items-center gap-3">
+<button class="relative">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">notifications</span>
+<span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-primary"></span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto px-4 pb-48">
+<div class="mt-4 @container">
+<div class="flex items-center justify-between gap-4 rounded-2xl border border-orange-200 bg-orange-50/50 dark:bg-orange-900/10 dark:border-orange-900/30 p-4 shadow-sm">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-500 text-xl font-bold">shopping_cart</span>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">식재료 3개 부족</p>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal">부족한 재료를 터치해 쇼핑 리스트에 담으세요.</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+<section class="mt-8">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">kitchen</span>
+                    냉장 <span class="text-sm font-normal text-slate-400">(6)</span>
+</h2>
+<button class="text-primary">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full in-stock px-4 ios-shadow">
+<span class="material-symbols-outlined text-primary text-lg">egg</span>
+<p class="text-sm font-medium">달걀</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full in-stock px-4 ios-shadow">
+<span class="material-symbols-outlined text-primary text-lg">local_cafe</span>
+<p class="text-sm font-medium">우유</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full in-stock px-4 ios-shadow">
+<span class="material-symbols-outlined text-primary text-lg">set_meal</span>
+<p class="text-sm font-medium">두부</p>
+</div>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-full border out-of-stock px-4 active:scale-95 transition-transform group">
+<span class="material-symbols-outlined text-lg">eco</span>
+<p class="text-sm font-medium">샐러드 채소</p>
+<span class="material-symbols-outlined text-orange-400 text-xs hidden group-active:block">check_circle</span>
+</button>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-full border out-of-stock px-4 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg">restaurant</span>
+<p class="text-sm font-medium">닭가슴살</p>
+</button>
+</div>
+</section>
+<section class="mt-10">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400">ac_unit</span>
+                    냉동 <span class="text-sm font-normal text-slate-400">(3)</span>
+</h2>
+<button class="text-primary">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-blue-400 text-lg">lunch_dining</span>
+<p class="text-sm font-medium">냉동 만두</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-blue-400 text-lg">icecream</span>
+<p class="text-sm font-medium">아이스크림</p>
+</div>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-full border out-of-stock px-4 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg">flatware</span>
+<p class="text-sm font-medium">볶음밥</p>
+</button>
+</div>
+</section>
+<section class="mt-10">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-400">liquor</span>
+                    양념/소스 <span class="text-sm font-normal text-slate-400">(4)</span>
+</h2>
+<button class="text-primary">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-orange-400 text-lg">opacity</span>
+<p class="text-sm font-medium">진간장</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-orange-400 text-lg">oil_barrel</span>
+<p class="text-sm font-medium">참기름</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-orange-400 text-lg">grain</span>
+<p class="text-sm font-medium">설탕</p>
+</div>
+<div class="flex h-10 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 px-4 ios-shadow">
+<span class="material-symbols-outlined text-orange-400 text-lg">science</span>
+<p class="text-sm font-medium">올리브유</p>
+</div>
+</div>
+</section>
+<div class="mt-10 p-4 rounded-xl bg-primary/10 border border-primary/20">
+<h3 class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">auto_awesome</span>
+                AI 식재료 팁
+            </h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                현재 <span class="font-bold text-primary">달걀</span>의 유통기한이 3일 남았습니다. 달걀말이나 스크램블 에그를 추천드려요!
+            </p>
+</div>
+</main>
+<div class="fixed bottom-24 left-0 w-full px-6 pointer-events-none">
+<button class="w-full h-14 bg-slate-900 dark:bg-primary text-white dark:text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-2xl pointer-events-auto active:scale-[0.97] transition-all">
+<span class="material-symbols-outlined">receipt_long</span>
+            쇼핑 리스트 생성하기
+        </button>
+</div>
+<nav class="fixed bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-4 pb-8 pt-2 flex justify-around items-center z-50">
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium">홈</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined filled-icon text-2xl">kitchen</span>
+<p class="text-[10px] font-medium">냉장고</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<p class="text-[10px] font-medium">레시피</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium">마이</p>
+</a>
+</nav>
+
+</body></html>

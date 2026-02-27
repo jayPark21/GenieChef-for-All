@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F8FAFC;
+    min-height: max(884px, 100dvh);
+  }
+}
+
+@layer components {
+  .ingredient-tag {
+    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 cursor-pointer;
+  }
+  .ingredient-tag.selected {
+    @apply bg-primary border-primary text-white shadow-md shadow-primary/20;
+  }
+}

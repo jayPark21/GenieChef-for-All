@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>동기화된 홈 화면 대시보드</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4ADE80",
+                        "accent": "#FACC15",
+                        "fridge-blue": "#E0F2FE",
+                        "freezer-cyan": "#ECFEFF",
+                        "pantry-orange": "#FFF7ED",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            background-color: #F8FAFC;
+        }
+        .ingredient-tag {
+            @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 cursor-pointer;
+        }
+        .ingredient-tag.selected {
+            @apply bg-primary border-primary text-white shadow-md shadow-primary/20;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display text-slate-900 min-h-screen flex flex-col pb-24">
+<header class="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-slate-100 px-5 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden border-2 border-primary/30">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwwHUaIvM1TqTIYKKCd9wJSMao2ojAqyZWJH4DiUJH989IRh1BanwX5koQ3vv9VcA0iD-oj3oBn5N-Zb1b_u9kU3XQK43_k6dU-sspps5ROoMkx5dX1KYp_bYmzTeSRFv8AQqls-6TKeDiUda5SYJb6ydEzXXT1bVklf-XgTcUYQSKYWu8XlVdiMRcsZodq6K-SjOIoN4BVHQjIz65g8Izoy8Z0OJ4oAxUo2R89aJyEE8TUHP5PB8CAGS2bTNJnae4CkDaQBcH398"/>
+</div>
+<div>
+<p class="text-[11px] font-bold text-slate-400 leading-none mb-1 uppercase tracking-wider">My Kitchen</p>
+<h1 class="text-base font-bold text-slate-800">제이미님의 주방</h1>
+</div>
+</div>
+<button class="size-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto">
+<section class="px-5 py-6">
+<h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">restaurant_menu</span>
+                오늘 어떤 식사를 할까요?
+            </h2>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-white border-2 border-primary shadow-sm shadow-primary/10">
+<span class="material-symbols-outlined text-primary text-2xl">set_meal</span>
+<span class="font-bold text-slate-800">든든한 한끼</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-100">
+<span class="material-symbols-outlined text-amber-400 text-2xl">timer</span>
+<span class="font-bold text-slate-600">간단식</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-100">
+<span class="material-symbols-outlined text-indigo-400 text-2xl">dark_mode</span>
+<span class="font-bold text-slate-600">야식</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-100">
+<span class="material-symbols-outlined text-rose-400 text-2xl">liquor</span>
+<span class="font-bold text-slate-600">술안주</span>
+</button>
+</div>
+</section>
+<section class="px-5 py-4 space-y-6">
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<h2 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400">kitchen</span>
+                        마이 냉장고
+                    </h2>
+<button class="text-xs font-semibold text-slate-400 flex items-center gap-1 py-1 px-2 bg-slate-100 rounded-lg">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                        동기화됨
+                    </button>
+</div>
+<p class="text-[11px] text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">info</span>
+                    '냉장고' 탭의 식재료가 자동으로 반영됩니다. 요리할 재료를 선택하세요.
+                </p>
+</div>
+<div class="space-y-3">
+<p class="text-xs font-bold text-blue-500 flex items-center gap-1.5 px-1 uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 냉장
+                </p>
+<div class="flex flex-wrap gap-2">
+<div class="ingredient-tag bg-white border-slate-200 selected">
+<span class="text-base">🥚</span> <span class="text-sm font-medium">계란</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200 selected">
+<span class="text-base">🧊</span> <span class="text-sm font-medium">두부</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🥓</span> <span class="text-sm font-medium">햄/소시지</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🥛</span> <span class="text-sm font-medium">우유</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200 selected">
+<span class="text-base">🥬</span> <span class="text-sm font-medium">대파</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🧅</span> <span class="text-sm font-medium">양파</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🥕</span> <span class="text-sm font-medium">당근</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🌶️</span> <span class="text-sm font-medium">김치</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🍦</span> <span class="text-sm font-medium">요거트</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<p class="text-xs font-bold text-cyan-500 flex items-center gap-1.5 px-1 uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> 냉동
+                </p>
+<div class="flex flex-wrap gap-2">
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🥟</span> <span class="text-sm font-medium">냉동 만두</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-base">🥦</span> <span class="text-sm font-medium">냉동 채소</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<p class="text-xs font-bold text-orange-500 flex items-center gap-1.5 px-1 uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> 양념 및 소스
+                </p>
+<div class="flex flex-wrap gap-2">
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">간장</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">고추장</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">된장</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">다진마늘</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">소금</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">설탕</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">후추</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">식용유</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">참기름</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">케첩</span>
+</div>
+<div class="ingredient-tag bg-white border-slate-200">
+<span class="text-sm font-medium">마요네즈</span>
+</div>
+</div>
+</div>
+<div class="py-2">
+<button class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-slate-300 text-slate-500 text-sm font-medium bg-slate-50/50">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                    재료 편집은 '냉장고' 탭에서 가능합니다
+                </button>
+</div>
+</section>
+<section class="px-5 py-8 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
+<div class="flex items-center gap-2 mb-4">
+<div class="flex -space-x-1">
+<div class="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px]">🤖</div>
+</div>
+<h2 class="text-lg font-bold">AI가 추천하는 오늘의 메뉴</h2>
+</div>
+<div class="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 group">
+<div class="aspect-[16/10] w-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCk-jlvRf36zw9T3Z-W68qPBOErC2FAs45bXt9qgZtwfW2hLbhMjlZUS2wS1Lkta6wfjD2mZlIed4KT7VQ73054ELVw_bR45BNVn5C08dMPsJQvJx6oW3WIYOWQT__9wQ8L5OQV6G910LkEkYCsqbcQX8cW63CRCrhR8e31FnBYBrAHsksZR6p4zXu29LO703ohAo9bcbINYEGhzjpQpWhUpi9TKhDxS_rKOtCqdEb9uidGLAADiQ6TLXgmymDyCiGRwra1W5708HY");'></div>
+<div class="p-6">
+<div class="flex items-center gap-2 mb-3">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-md border border-primary/20">든든한 한끼 맞춤</span>
+<span class="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-md">식재료 7개 활용</span>
+</div>
+<h3 class="text-xl font-bold text-slate-900 mb-2">백종원표 계란 두부 조림</h3>
+<p class="text-slate-500 text-sm leading-relaxed mb-6">
+                        냉장고에 있는 <span class="text-slate-800 font-bold">계란</span>, <span class="text-slate-800 font-bold">두부</span>, <span class="text-slate-800 font-bold">대파</span>를 활용해 따뜻하고 든든한 밥도둑을 만들어보세요.
+                    </p>
+<button class="w-full py-4 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary/30 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined font-bold">chef_hat</span>
+                        레시피 바로보기
+                    </button>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100">
+<div class="size-12 rounded-xl bg-amber-400 flex items-center justify-center text-white shadow-md shadow-amber-200">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-xs font-bold text-amber-600">이 메뉴로 식비 절약!</p>
+<p class="text-sm font-medium text-slate-700">외식 대비 약 <span class="font-bold text-slate-900 underline decoration-amber-300">12,000원</span>을 아낄 수 있어요.</p>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-6 pt-3 pb-8">
+<div class="flex items-center justify-between">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">home</span>
+<p class="text-[10px] font-bold">홈</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">kitchen</span>
+<p class="text-[10px] font-medium">냉장고</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<p class="text-[10px] font-medium">기록</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium">내 정보</p>
+</a>
+</div>
+</nav>
+
+</body></html>
