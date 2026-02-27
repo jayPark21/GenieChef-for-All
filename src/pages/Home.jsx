@@ -234,10 +234,13 @@ const Home = () => {
               }`}
           >
             {isLoading ? (
-              <>
-                <span className="material-symbols-outlined animate-spin font-bold">sync</span>
-                AI 식단 고민하는 중...
-              </>
+              <div className="flex items-center gap-3">
+                <div className="relative size-8 rounded-full bg-white/20 flex items-center justify-center text-xl shadow-sm border border-slate-300">
+                  <span className="animate-bounce block">👨‍🍳</span>
+                  <span className="absolute top-0 right-0 -mr-2 -mt-1 material-symbols-outlined text-amber-200 text-sm animate-ping">emoji_objects</span>
+                </div>
+                <span>AI 쉐프가 식단 고민 중...</span>
+              </div>
             ) : (
               <>
                 <span className="material-symbols-outlined font-bold">auto_awesome</span>
@@ -300,7 +303,18 @@ const Home = () => {
         <button
           onClick={() => {
             if (selectedRecipeId) {
-              navigate('/recipe');
+              const selectedRecipe = recommendations.find(r => r.id === selectedRecipeId);
+              const ingredientNames = selectedIngredients.map(
+                id => initialIngredients.find(item => item.id === id)?.name
+              ).filter(Boolean);
+
+              navigate('/recipe', {
+                state: {
+                  recipe: selectedRecipe,
+                  ingredients: ingredientNames,
+                  dietMode
+                }
+              });
             }
           }}
           disabled={!selectedRecipeId}

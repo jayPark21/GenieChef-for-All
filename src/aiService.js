@@ -60,3 +60,57 @@ export const recommendRecipes = async (ingredients, dietMode) => {
         throw new Error("레시피 추천을 생성하는 중 오류가 발생했습니다.");
     }
 };
+
+export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode) => {
+    if (!genAI) {
+        throw new Error("Gemini API 키가 설정되지 않았습니다.");
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // 시스템 프롬프트 작성
+    const prompt = `
+당신은 최고의 요리사입니다. 사용자가 선택한 요리 이름과 식재료, 식단 목적을 기반으로 상세 레시피와 영양 정보를 생성해주세요.
+
+요리 이름: ${recipeTitle}
+활용 가능 식재료: ${ingredients.join(', ')}
+식단 목적: ${dietMode}
+
+응답은 항상 순수 JSON 형식으로만 반환해야 하며, 마크다운(예: \`\`\`json)은 포함하지 마세요.
+JSON 구조는 다음과 같아야 합니다:
+{
+  "time": "예: 15분",
+  "difficulty": "예: 쉬움, 보통, 어려움",
+  "ingredientsUsed": ["계란", "양파", "간장"], // 단계에서 사용될 실제 재료 이름 배열
+  "steps": [
+    "양파를 채 썬다.",
+    "계란을 푼다.",
+    "팬에 기름을 두르고 양파를 볶다가 계란을 붓는다."
+  ],
+  "nutrition": {
+    "calories": 350,
+    "carbs": 20, // 탄수화물 퍼센트 기호 없이 정수 형태의 0~100 사이 숫자
+    "protein": 45, // 단백질 비율 숫자
+    "fat": 35, // 지방 비율 숫자
+    "sodium": "420mg",
+    "sugar": "4.5g",
+    "fiber": "2.1g"
+  }
+}
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        // JSON 파싱 (마크다운 블록 제거)
+        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const recipeDetail = JSON.parse(cleanedText);
+
+        return recipeDetail;
+
+    } catch (error) {
+        console.error("AI 상세 레시피 생성 실패:", error);
+        throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
+    }
+};
