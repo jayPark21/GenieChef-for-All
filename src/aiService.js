@@ -84,16 +84,24 @@ export const recommendRecipes = async (ingredients, dietMode) => {
 };
 
 // 3. 인포그래픽 실시간 상태 체크 (NotebookLM Polling Simulator)
-// 실제 환경에서는 백엔드 API를 호출하지만, 데모를 위해 리얼하게 동작하도록 구성
+let globalPollCount = 0; // 세션 내 폴링 횟수 추적하여 확정적 완료 보장
+
 export const checkInfographicStatus = async (recipeTitle) => {
-    // 인물(땡칠이)이 인지하는 실제 데이터 (NotebookLM Studio ID: bc9897ff)
-    // 실제 생성 시간이 걸리므로 5초 주기로 호출될 때마다 시각적으로 단계를 보여줌
     return new Promise((resolve) => {
         setTimeout(() => {
-            // 특정 시점 이후에만 완료 상태 반환 (리얼함 강조)
-            const isCompleted = Math.random() > 0.7; // 30% 확률로 완료 (수차례 폴링 유도)
+            globalPollCount++;
 
-            if (isCompleted && recipeTitle.includes('김치찌개')) {
+            // 4회차 이상이면 무조건 완료 (약 20~25초 소요 시뮬레이션)
+            // 또는 운 좋게 30% 확률로 빨리 완료
+            const isCompleted = globalPollCount >= 4 || Math.random() > 0.7;
+
+            // 메뉴명에 '김치' 또는 '찌개'가 포함되면 김치찌개 URL 반환
+            const isKimchiJjigae = recipeTitle.includes('김치') || recipeTitle.includes('찌개') || recipeTitle.includes('Kimchi');
+
+            if (isCompleted && isKimchiJjigae) {
+                // 완료 시 카운트 초기화 (다음 진입 시 재시뮬레이션 가능하게)
+                if (isCompleted) globalPollCount = 0;
+
                 resolve({
                     completed: true,
                     url: 'https://lh3.googleusercontent.com/notebooklm/ANHLwAzSgmsoN8mWhawG8K5WUmHM-8XPVAV9VI9ib3NXzU1h6oQGM44sM532bR9QEyir-7e7efGoh8Rt9i9EaTpXF3Rzp31pTnYsUJrQqGKJPc9wHtteizoG483Xt01ryl5gstk9u15NfY1y8-hzePNXXnT6oeDxiA=w1536-d-h2752-mp2',
