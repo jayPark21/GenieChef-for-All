@@ -3,31 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { recommendRecipes } from '../aiService';
-
-const initialIngredients = [
-  { id: 1, name: '계란', icon: '🥚', category: '냉장' },
-  { id: 2, name: '두부', icon: '🧊', category: '냉장' },
-  { id: 3, name: '햄/소시지', icon: '🥓', category: '냉장' },
-  { id: 4, name: '우유', icon: '🥛', category: '냉장' },
-  { id: 5, name: '대파', icon: '🥬', category: '냉장' },
-  { id: 6, name: '양파', icon: '🧅', category: '냉장' },
-  { id: 7, name: '당근', icon: '🥕', category: '냉장' },
-  { id: 8, name: '김치', icon: '🌶️', category: '냉장' },
-  { id: 9, name: '요거트', icon: '🍦', category: '냉장' },
-  { id: 10, name: '냉동 만두', icon: '🥟', category: '냉동' },
-  { id: 11, name: '냉동 채소', icon: '🥦', category: '냉동' },
-  { id: 12, name: '간장', icon: '', category: '양념 및 소스' },
-  { id: 13, name: '고추장', icon: '', category: '양념 및 소스' },
-  { id: 14, name: '된장', icon: '', category: '양념 및 소스' },
-  { id: 15, name: '다진마늘', icon: '', category: '양념 및 소스' },
-  { id: 16, name: '소금', icon: '', category: '양념 및 소스' },
-  { id: 17, name: '설탕', icon: '', category: '양념 및 소스' },
-  { id: 18, name: '후추', icon: '', category: '양념 및 소스' },
-  { id: 19, name: '식용유', icon: '', category: '양념 및 소스' },
-  { id: 20, name: '참기름', icon: '', category: '양념 및 소스' },
-  { id: 21, name: '케첩', icon: '', category: '양념 및 소스' },
-  { id: 22, name: '마요네즈', icon: '', category: '양념 및 소스' },
-];
+import { initialIngredients } from '../data/ingredients';
 
 const dietModes = [
   { id: '든든 한끼', icon: 'set_meal', color: 'text-primary' },
@@ -39,7 +15,9 @@ const dietModes = [
 const Home = () => {
   const navigate = useNavigate();
   const [dietMode, setDietMode] = useState('든든 한끼');
-  const [selectedIngredients, setSelectedIngredients] = useState(initialIngredients.map(item => item.id));
+  const [ownedIngredients, setOwnedIngredients] = useState([]);
+  const [customIngredients, setCustomIngredients] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [recommendations, setRecommendations] = useState(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,14 +34,35 @@ const Home = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.dietMode) setDietMode(data.dietMode);
-          if (data.selectedIngredients) setSelectedIngredients(data.selectedIngredients);
+
+          // 보유한 재료 상태 강제 동기화 (기본값 전체)
+          let currentOwned = initialIngredients.map(item => item.id);
+          if (data.ownedIngredients) {
+            currentOwned = data.ownedIngredients;
+          }
+          setOwnedIngredients(currentOwned);
+
+          if (data.customIngredients) {
+            setCustomIngredients(data.customIngredients);
+          }
+
+          // 선택된 재료는 보유한 재료 내에서만 유지
+          if (data.selectedIngredients) {
+            setSelectedIngredients(data.selectedIngredients.filter(id => currentOwned.includes(id)));
+          } else {
+            setSelectedIngredients(currentOwned);
+          }
         } else {
-          // 문서가 없으면 초기값(전체선택) 세팅
-          setSelectedIngredients(initialIngredients.map(item => item.id));
+          // 문서 없으면 전체
+          const allIds = initialIngredients.map(item => item.id);
+          setOwnedIngredients(allIds);
+          setSelectedIngredients(allIds);
         }
       } catch (error) {
         console.error("Firestore 로드 에러:", error);
-        setSelectedIngredients(initialIngredients.map(item => item.id));
+        const allIds = initialIngredients.map(item => item.id);
+        setOwnedIngredients(allIds);
+        setSelectedIngredients(allIds);
       } finally {
         setIsInitializing(false);
       }
@@ -80,8 +79,10 @@ const Home = () => {
         await setDoc(userRef, {
           dietMode,
           selectedIngredients,
+          ownedIngredients,
+          customIngredients,
           updatedAt: new Date()
-        });
+        }, { merge: true });
       } catch (error) {
         // [땡칠이 팀장 방어 로직] 오프라인일 때는 조용히 넘어갑니다. 🤫
         if (error.code === 'unavailable' || error.message.includes('offline')) {
@@ -100,6 +101,8 @@ const Home = () => {
     );
   };
 
+  const allIngredients = [...initialIngredients, ...customIngredients];
+
   const handleRecommend = async () => {
     setIsLoading(true);
     setRecommendations(null);
@@ -108,7 +111,7 @@ const Home = () => {
     try {
       // 선택된 재료 ID를 이름으로 변환
       const ingredientNames = selectedIngredients.map(
-        id => initialIngredients.find(item => item.id === id)?.name
+        id => allIngredients.find(item => item.id === id)?.name
       ).filter(Boolean);
 
       // AI 서비스 호출
@@ -122,7 +125,8 @@ const Home = () => {
   };
 
   const renderIngredientGroup = (categoryName, titleColorClass, dotColorClass) => {
-    const items = initialIngredients.filter(item => item.category === categoryName);
+    // 필터링: ownedIngredients에 있는 항목들만 렌더링
+    const items = allIngredients.filter(item => item.category === categoryName && ownedIngredients.includes(item.id));
     if (items.length === 0) return null;
 
     return (
@@ -207,16 +211,16 @@ const Home = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <span className="material-symbols-outlined text-blue-400">kitchen</span>
-                내 냉장고 식재료
+                내 냉장고 속 식재료 ({ownedIngredients.length})
               </h2>
               <button onClick={() => navigate('/refrigerator')} className="text-xs font-semibold text-slate-400 flex items-center gap-1 py-1 px-2 bg-slate-100 rounded-lg">
                 <span className="material-symbols-outlined text-[14px]">edit</span>
-                관리
+                냉장고 관리
               </button>
             </div>
             <p className="text-[11px] text-slate-400 flex items-center gap-1">
               <span className="material-symbols-outlined text-[12px]">info</span>
-              요리에 사용할 식재료를 선택해주세요. (기본 전체 선택)
+              현재 냉장고에 있는 재료들입니다. 요리할 재료를 켜서 레시피를 만들어보세요!
             </p>
           </div>
 
@@ -310,7 +314,7 @@ const Home = () => {
             if (selectedRecipeId) {
               const selectedRecipe = recommendations.find(r => r.id === selectedRecipeId);
               const ingredientNames = selectedIngredients.map(
-                id => initialIngredients.find(item => item.id === id)?.name
+                id => allIngredients.find(item => item.id === id)?.name
               ).filter(Boolean);
 
               navigate('/recipe', {

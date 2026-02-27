@@ -7,7 +7,10 @@ import { initialIngredients } from '../data/ingredients';
 const Refrigerator = () => {
     const navigate = useNavigate();
     const [ownedIngredients, setOwnedIngredients] = useState([]);
+    const [customIngredients, setCustomIngredients] = useState([]);
     const [isInitializing, setIsInitializing] = useState(true);
+    const [addingCategory, setAddingCategory] = useState(null);
+    const [newIngredientName, setNewIngredientName] = useState('');
 
     const userRef = doc(db, 'users', 'guest_user');
 
@@ -15,8 +18,10 @@ const Refrigerator = () => {
         const fetchData = async () => {
             try {
                 const docSnap = await getDoc(userRef);
-                if (docSnap.exists() && docSnap.data().ownedIngredients) {
-                    setOwnedIngredients(docSnap.data().ownedIngredients);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.ownedIngredients) setOwnedIngredients(data.ownedIngredients);
+                    if (data.customIngredients) setCustomIngredients(data.customIngredients);
                 } else {
                     // 기본값: 모든 재료 보유
                     const allIds = initialIngredients.map(item => item.id);
@@ -37,13 +42,13 @@ const Refrigerator = () => {
 
         const saveData = async () => {
             try {
-                await setDoc(userRef, { ownedIngredients, updatedAt: new Date() }, { merge: true });
+                await setDoc(userRef, { ownedIngredients, customIngredients, updatedAt: new Date() }, { merge: true });
             } catch (error) {
                 console.warn("Firestore 저장 실패 (오프라인 상태)");
             }
         };
         saveData();
-    }, [ownedIngredients, isInitializing]);
+    }, [ownedIngredients, customIngredients, isInitializing]);
 
     const toggleIngredient = (id) => {
         setOwnedIngredients(prev =>
@@ -52,11 +57,31 @@ const Refrigerator = () => {
     };
 
     const selectAllIngredients = () => {
-        const allIds = initialIngredients.map(item => item.id);
+        const allIngredients = [...initialIngredients, ...customIngredients];
+        const allIds = allIngredients.map(item => item.id);
         setOwnedIngredients(allIds);
     };
 
-    const groupedIngredients = initialIngredients.reduce((acc, current) => {
+    const handleAddCustom = (categoryName) => {
+        if (!newIngredientName.trim()) {
+            setAddingCategory(null);
+            return;
+        }
+        const newIngredient = {
+            id: `custom_${Date.now()}`,
+            name: newIngredientName.trim(),
+            category: categoryName,
+            icon: '🛒'
+        };
+        setCustomIngredients(prev => [...prev, newIngredient]);
+        setOwnedIngredients(prev => [...prev, newIngredient.id]);
+        setAddingCategory(null);
+        setNewIngredientName('');
+    };
+
+    const allIngredients = [...initialIngredients, ...customIngredients];
+
+    const groupedIngredients = allIngredients.reduce((acc, current) => {
         if (!acc[current.category]) acc[current.category] = [];
         acc[current.category].push(current);
         return acc;
@@ -68,7 +93,7 @@ const Refrigerator = () => {
         { name: '양념 및 소스', icon: 'liquor', colorClass: 'text-orange-400', borderClass: 'border-orange-100 bg-white text-slate-900', selectedIconColor: 'text-orange-400' },
     ];
 
-    const lackCount = initialIngredients.length - ownedIngredients.length;
+    const lackCount = allIngredients.length - ownedIngredients.length;
     const isLack = lackCount > 0;
 
     return (
@@ -103,8 +128,8 @@ const Refrigerator = () => {
                         onClick={selectAllIngredients}
                         disabled={!isLack}
                         className={`text-sm font-bold flex items-center gap-1 px-4 py-2 rounded-xl transition-all shadow-sm ${isLack
-                                ? 'text-primary bg-primary/10 active:scale-95 cursor-pointer'
-                                : 'text-slate-400 bg-slate-100 opacity-70 cursor-not-allowed'
+                            ? 'text-primary bg-primary/10 active:scale-95 cursor-pointer'
+                            : 'text-slate-400 bg-slate-100 opacity-70 cursor-not-allowed'
                             }`}
                     >
                         <span className="material-symbols-outlined text-[16px]">done_all</span> 전체 선택
@@ -122,10 +147,32 @@ const Refrigerator = () => {
                                     <span className={`material-symbols-outlined ${cat.colorClass}`}>{cat.icon}</span>
                                     {cat.name} <span className="text-sm font-normal text-slate-400">({ownedCount})</span>
                                 </h2>
-                                <button className="text-primary">
+                                <button onClick={() => setAddingCategory(cat.name)} className="text-primary active:scale-95 transition-transform">
                                     <span className="material-symbols-outlined text-2xl">add_circle</span>
                                 </button>
                             </div>
+
+                            {addingCategory === cat.name && (
+                                <div className="flex items-center gap-2 mb-3 bg-white p-2 rounded-xl shadow-sm border border-primary/30">
+                                    <span className="text-lg">🛒</span>
+                                    <input
+                                        type="text"
+                                        value={newIngredientName}
+                                        onChange={(e) => setNewIngredientName(e.target.value)}
+                                        placeholder="직접 입력 (예: 트러플 오일)"
+                                        className="flex-1 bg-transparent text-sm outline-none text-slate-900 placeholder:text-slate-400"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleAddCustom(cat.name);
+                                            if (e.key === 'Escape') setAddingCategory(null);
+                                        }}
+                                    />
+                                    <button onClick={() => handleAddCustom(cat.name)} className="text-white bg-primary rounded-lg px-3 py-1.5 text-xs font-bold shadow-sm active:scale-95 transition-transform">
+                                        추가
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="flex flex-wrap gap-2">
                                 {items.map(item => {
                                     const isOwned = ownedIngredients.includes(item.id);
