@@ -11,6 +11,7 @@ const Recipe = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15분 디폴트
     const [isTimerActive, setIsTimerActive] = useState(false);
+    const [isInfoLoading, setIsInfoLoading] = useState(true);
 
     useEffect(() => {
         let interval = null;
@@ -132,7 +133,6 @@ const Recipe = () => {
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[300px] flex flex-col justify-center">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center space-y-6 animate-pulse">
-                                {/* 지니 쉪 애니메이션 아이콘 */}
                                 <div className="relative">
                                     <div className="size-24 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-5xl relative z-10 animate-bounce block">
                                         👨‍🍳
@@ -159,7 +159,6 @@ const Recipe = () => {
                             <div className="w-full animate-fade-in transition-opacity duration-1000">
                                 <div className="space-y-6">
                                     {recipeDetail?.steps.map((step, idx) => {
-                                        // "1. 양파를...", "2. ..." 형식이면 숫자 골라내기 위해 가공
                                         const stepText = step.replace(/^\d+\.\s*/, '');
                                         return (
                                             <div key={idx} className="flex gap-4">
@@ -178,17 +177,33 @@ const Recipe = () => {
                                         지니 쉪의 맞춤 인포그래픽 레시피
                                     </h4>
                                     <div className="w-full rounded-3xl overflow-hidden shadow-lg border-4 border-white ring-1 ring-slate-200 bg-slate-50 aspect-[3/4] relative group">
+                                        {isInfoLoading && (
+                                            <div className="absolute inset-0 z-20 bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+                                                <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-3xl animate-spin mb-4">
+                                                    ✍️
+                                                </div>
+                                                <p className="text-primary font-bold text-sm tracking-tight mb-1">지니 쉪이 레시피를<br />정성껏 작성 중...</p>
+                                                <p className="text-slate-400 text-[10px]">잠시만 기다려주세요! 거의 다 됐습니다! 🐟</p>
+                                                <div className="mt-4 flex gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                                                </div>
+                                            </div>
+                                        )}
                                         <img
                                             src="https://lh3.googleusercontent.com/notebooklm/ANHLwAwH7LmVeZA76SfcaNAEf6Abvw8hpW0xy_iG895cH12EopyhkFe0U0XyiCVlmjsyb7Y2uk-eKa4_bCQjWU6IUdMtG3FPGnISOF-dHRbGEqI8Dn3isv2vGPtAlIEgHBo4ZGIRGhTyDhuw7AdSEkaZPmXR46N2=w1536-d-h2752-mp2"
                                             alt="지니 쉪의 실시간 인포그래픽 레시피"
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                            className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${isInfoLoading ? 'opacity-0' : 'opacity-100'}`}
+                                            onLoad={() => setIsInfoLoading(false)}
+                                            onError={() => setIsInfoLoading(false)}
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                                         <a
                                             href="https://notebooklm.google.com/notebook/1b602f6d-7188-4e1c-8b09-ac95a947490e"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-[11px] font-bold text-slate-800 shadow-sm flex items-center gap-2 active:scale-95 transition-all"
+                                            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-[11px] font-bold text-slate-800 shadow-sm flex items-center gap-2 active:scale-95 transition-all z-30"
                                         >
                                             <span className="material-symbols-outlined text-sm">open_in_new</span>
                                             원본 크게 보기
