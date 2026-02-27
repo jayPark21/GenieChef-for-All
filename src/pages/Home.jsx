@@ -255,8 +255,8 @@ const Home = () => {
           <section className="px-5 py-8 mt-4 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px]">🤖</div>
-                <h2 className="text-lg font-bold text-slate-800">AI 맞춤 추천 식단</h2>
+                <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px]">👨‍🍳</div>
+                <h2 className="text-lg font-bold text-slate-800">지니 쉪 맞춤 추천 식단</h2>
               </div>
               <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20">
                 {dietMode}

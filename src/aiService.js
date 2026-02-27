@@ -107,6 +107,10 @@ JSON 구조는 다음과 같아야 합니다:
         const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const recipeDetail = JSON.parse(cleanedText);
 
+        // 실제 해당 메뉴 사진을 보여주기 위해 무료 AI 이미지 생성 서비스(pollinations.ai) 사용
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(recipeTitle + " delicious high quality food photography")}?width=800&height=600&nologo=true`;
+        recipeDetail.img = imageUrl;
+
         return recipeDetail;
 
     } catch (error) {

@@ -83,12 +83,12 @@ const Recipe = () => {
                 </section>
 
                 <section className="px-6 py-10">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 text-center">AI 쉐프의 상세 요리 과정</h3>
+                    <h3 className="text-lg font-bold text-slate-900 mb-6 text-center">지니 쉪의 상세 요리 과정</h3>
 
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[300px] flex flex-col justify-center">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center space-y-6 animate-pulse">
-                                {/* AI 쉐프 애니메이션 아이콘 */}
+                                {/* 지니 쉪 애니메이션 아이콘 */}
                                 <div className="relative">
                                     <div className="size-24 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-5xl relative z-10 animate-bounce block">
                                         👨‍🍳
@@ -100,7 +100,7 @@ const Recipe = () => {
                                 </div>
 
                                 <div className="text-center space-y-2">
-                                    <p className="text-primary font-bold text-lg">AI 쉐프가 맛있는 레시피를<br />정성껏 요리하는 중...</p>
+                                    <p className="text-primary font-bold text-lg">지니 쉪이 맛있는 레시피를<br />정성껏 요리하는 중...</p>
                                     <p className="text-slate-400 text-xs">잠시만 기다려주세요! (맛있는 냄새 킁킁)</p>
                                 </div>
 
@@ -126,6 +126,13 @@ const Recipe = () => {
                                             </div>
                                         );
                                     })}
+                                </div>
+
+                                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
+                                    <h4 className="text-md font-bold text-slate-800 mb-4">지니 쉪의 레시피 요약 (Infographic) 📜</h4>
+                                    <div className="w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
+                                        <img src="https://lh3.googleusercontent.com/notebooklm/ANHLwAyrr0HcGM-1iHTGT5elx0eOBnKmuvzVGDfSUIIeUMDtwV3pRudvSwmQE2BbFuASayWgU1d6I4PTt9BoAnt6Ki0wdevroQNUcNetPkCYZfu2Dz3Ud3wzvXESzuq771DrX7TxuiaCpwK5AoFrqc-DbKxXeVxNGw=w1536-d-h2752-mp2" alt="레시피 인포그래픽" className="w-full h-auto object-contain" />
+                                    </div>
                                 </div>
                             </div>
                         )}
