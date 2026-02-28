@@ -4,6 +4,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { generateRecipeDetail, checkInfographicStatus, generateRecipeImage } from '../aiService';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 import RecipeInfographic from '../components/RecipeInfographic';
 
@@ -11,6 +12,7 @@ const Recipe = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { recipe, ingredients, dietMode, dietGoal } = location.state || {};
+    const { currentUser } = useAuth();
 
     const [recipeDetail, setRecipeDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -102,8 +104,8 @@ ${(recipeDetail.steps || []).map((step, idx) => `${idx + 1}. ${step}`).join('\n'
 
             const compressedImageUrl = infoUrl ? await compressImage(infoUrl) : null;
 
-            // 사용자 인증 기능이 아직 없으므로 'guest_user'로 하드코딩
-            const historyRef = collection(db, 'users', 'guest_user', 'history');
+            const userId = currentUser?.uid || 'guest_user';
+            const historyRef = collection(db, 'users', userId, 'history');
 
             await addDoc(historyRef, {
                 title: recipe.title,

@@ -1,32 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { specialMeals } from '../data/specialMeals';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 const ShoppingList = () => {
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
     // 상태 관리
-    const [shoppingItems, setShoppingItems] = useState([
-        { id: 'item1', name: '신선 시금치', category: '식재료', amount: 2, checked: false },
-        { id: 'item2', name: '방울토마토', category: '식재료', amount: 1, checked: false },
-        { id: 'item3', name: '우유 (1L)', category: '식재료', amount: 1, checked: true },
-        { id: 'item4', name: '올리브유', category: '양념 및 소스', amount: 1, checked: false }
-    ]);
+    const [shoppingItems, setShoppingItems] = useState([]);
+    const [isInitializing, setIsInitializing] = useState(true);
+    const skipSaveRef = useRef(true);
 
     const [activeTab, setActiveTab] = useState('전체');
     const [selectedSpecialMeal, setSelectedSpecialMeal] = useState(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [mealIngredientsCheck, setMealIngredientsCheck] = useState({});
 
-    // 수량 조절 핸들러
+    const [newItemName, setNewItemName] = useState('');
+    const [newItemCategory, setNewItemCategory] = useState('냉장');
+
+    const userRef = doc(db, 'users', currentUser?.uid || 'guest_user');
+
+    // Firestore 데이터 로드
+    useEffect(() => {
+        const fetchShoppingList = async () => {
+            try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.shoppingList) {
+                        setShoppingItems(data.shoppingList);
+                    }
+                }
+            } catch (error) {
+                console.error("쇼핑리스트 로드 에러:", error);
+            } finally {
+                setIsInitializing(false);
+            }
+        };
+        fetchShoppingList();
+    }, [userRef]);
+
+    // Firestore 데이터 저장 (자동 동기화)
+    useEffect(() => {
+        if (isInitializing) return;
+        if (skipSaveRef.current) {
+            skipSaveRef.current = false;
+            return;
+        }
+        const saveShoppingList = async () => {
+            try {
+                await setDoc(userRef, { shoppingList: shoppingItems }, { merge: true });
+            } catch (error) {
+                console.warn("쇼핑리스트 저장 실패:", error);
+            }
+        };
+        saveShoppingList();
+    }, [shoppingItems, isInitializing, userRef]);
+
+    // 수동 식재료 추가 핸들러
+    const addManualItem = (e) => {
+        e.preventDefault();
+        if (!newItemName.trim()) return;
+
+        const newItem = {
+            id: `manual_${Date.now()}`,
+            name: newItemName.trim(),
+            category: newItemCategory,
+            amount: 1,
+            checked: false
+        };
+
+        setShoppingItems(prev => [newItem, ...prev]);
+        setNewItemName('');
+    };
+
+    // 수량 조절 핸들러 (0이 되면 삭제)
     const updateAmount = (id, delta) => {
         setShoppingItems(prev => prev.map(item => {
             if (item.id === id) {
                 const newAmount = Math.max(0, item.amount + delta);
-                // 0개가 되면 삭제할지 여부는 기획에 따라 다름 (일단 삭제되도록 구현)
                 if (newAmount === 0) return null;
                 return { ...item, amount: newAmount };
             }
@@ -123,7 +180,7 @@ const ShoppingList = () => {
                 {/* 탭 필터 */}
                 <div className="px-4 mb-6 sticky top-[72px] z-10 py-2 bg-slate-50/90 backdrop-blur-md">
                     <div className="flex gap-2 p-1 bg-white rounded-full shadow-sm border border-slate-200 hide-scrollbar overflow-x-auto">
-                        {['전체', '식재료', '냉장', '냉동', '양념 및 소스'].map(tab => (
+                        {['전체', '냉장', '냉동', '상온', '양념 및 소스'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -133,6 +190,32 @@ const ShoppingList = () => {
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {/* 수동 식재료 추가 폼 */}
+                <div className="px-4 mb-6">
+                    <form onSubmit={addManualItem} className="flex items-center gap-2">
+                        <select
+                            value={newItemCategory}
+                            onChange={(e) => setNewItemCategory(e.target.value)}
+                            className="h-12 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 outline-none focus:border-primary shrink-0"
+                        >
+                            <option value="냉장">냉장</option>
+                            <option value="냉동">냉동</option>
+                            <option value="상온">상온</option>
+                            <option value="양념 및 소스">양념/소스</option>
+                        </select>
+                        <input
+                            type="text"
+                            placeholder="추가할 품목 (예: 우유)"
+                            value={newItemName}
+                            onChange={(e) => setNewItemName(e.target.value)}
+                            className="h-12 flex-1 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-primary"
+                        />
+                        <button type="submit" className="h-12 w-12 flex items-center justify-center bg-primary text-white rounded-xl shadow-lg shadow-primary/30 active:scale-95 transition-transform shrink-0">
+                            <span className="material-symbols-outlined">add</span>
+                        </button>
+                    </form>
                 </div>
 
                 {/* 쇼핑 아이템 리스트 */}

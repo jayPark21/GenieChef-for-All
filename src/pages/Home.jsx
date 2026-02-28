@@ -15,6 +15,7 @@ const dietModes = [
 
 const Home = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [dietMode, setDietMode] = useState('든든 한끼');
   const [dietGoal, setDietGoal] = useState(() => localStorage.getItem('dietGoal') || '');
   const [ownedIngredients, setOwnedIngredients] = useState([]);
@@ -26,7 +27,6 @@ const Home = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const skipSaveRef = useRef(true);
-  const { currentUser } = useAuth();
 
   // Firestore 사용자 문서 참조
   const userRef = doc(db, 'users', currentUser?.uid || 'guest_user');
@@ -280,11 +280,15 @@ const Home = () => {
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-slate-100 px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden border-2 border-primary/30">
-            <img alt="Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwwHUaIvM1TqTIYKKCd9wJSMao2ojAqyZWJH4DiUJH989IRh1BanwX5koQ3vv9VcA0iD-oj3oBn5N-Zb1b_u9kU3XQK43_k6dU-sspps5ROoMkx5dX1KYp_bYmzTeSRFv8AQqls-6TKeDiUda5SYJb6ydEzXXT1bVklf-XgTcUYQSKYWu8XlVdiMRcsZodq6K-SjOIoN4BVHQjIz65g8Izoy8Z0OJ4oAxUo2R89aJyEE8TUHP5PB8CAGS2bTNJnae4CkDaQBcH398" />
+            {currentUser?.photoURL ? (
+              <img alt="Profile" className="w-full h-full object-cover" src={currentUser.photoURL} />
+            ) : (
+              <span className="material-symbols-outlined text-2xl">person</span>
+            )}
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 leading-none mb-1 uppercase tracking-wider">My Kitchen</p>
-            <h1 className="text-base font-bold text-slate-800">제이미님의 주방</h1>
+            <h1 className="text-base font-bold text-slate-800">{currentUser?.displayName ? `${currentUser.displayName}님의 주방` : '게스트님의 주방'}</h1>
           </div>
         </div>
         <button className="size-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
