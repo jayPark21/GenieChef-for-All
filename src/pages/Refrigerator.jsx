@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { initialIngredients } from '../data/ingredients';
+import { useAuth } from '../contexts/AuthContext';
 
 const Refrigerator = () => {
     const navigate = useNavigate();
@@ -13,8 +14,9 @@ const Refrigerator = () => {
     const [newIngredientName, setNewIngredientName] = useState('');
     const [isSyncing, setIsSyncing] = useState(false);
     const skipSaveRef = useRef(true);
+    const { currentUser } = useAuth();
 
-    const userRef = doc(db, 'users', 'guest_user');
+    const userRef = doc(db, 'users', currentUser?.uid || 'guest_user');
 
     useEffect(() => {
         const fetchData = async () => {

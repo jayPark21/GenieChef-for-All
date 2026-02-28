@@ -4,15 +4,17 @@ import { collection, getDocs, orderBy, query, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAuth } from '../contexts/AuthContext';
 
 const History = () => {
     const navigate = useNavigate();
     const [historyList, setHistoryList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedHistory, setSelectedHistory] = useState(null);
+    const { currentUser } = useAuth();
 
     // 로그인이 구현되지 않았으므로 임시로 하드코딩된 guest_user 아이디를 사용
-    const historyRef = collection(doc(db, 'users', 'guest_user'), 'history');
+    const historyRef = collection(doc(db, 'users', currentUser?.uid || 'guest_user'), 'history');
 
     useEffect(() => {
         const fetchHistory = async () => {

@@ -10,7 +10,7 @@ import RecipeInfographic from '../components/RecipeInfographic';
 const Recipe = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { recipe, ingredients, dietMode } = location.state || {};
+    const { recipe, ingredients, dietMode, dietGoal } = location.state || {};
 
     const [recipeDetail, setRecipeDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +139,7 @@ ${(recipeDetail.steps || []).map((step, idx) => `${idx + 1}. ${step}`).join('\n'
 
         const fetchDetail = async () => {
             try {
-                const detail = await generateRecipeDetail(recipe.title, ingredients, dietMode);
+                const detail = await generateRecipeDetail(recipe.title, ingredients, dietMode, dietGoal);
                 setRecipeDetail(detail);
 
                 // 조리 시간(문자열)을 파싱하여 초 단위로 변환 후 타이머에 동기화

@@ -1,8 +1,26 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const NutritionGuide = () => {
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
+
+    const handleSetGoal = async (goal) => {
+        try {
+            localStorage.setItem('dietGoal', goal);
+            if (currentUser) {
+                await setDoc(doc(db, 'users', currentUser.uid), { dietGoal: goal }, { merge: true });
+            }
+            alert(`'${goal}' 목표가 땡칠이 팀장에게 접수되었습니다! 🫡 홈 화면에서 맞춰서 추천해드릴게요!`);
+            navigate('/');
+        } catch (error) {
+            console.error('목표 설정 실패:', error);
+            alert('목표 설정 중 오류가 발생했습니다.');
+        }
+    };
 
     return (
         <div className="font-display text-slate-900 min-h-screen flex flex-col bg-slate-50 pb-24">
@@ -161,8 +179,8 @@ const NutritionGuide = () => {
                         현재 체중 감량이 목적이신가요, 아니면 근육량 증가가 목적이신가요? 목적에 맞춰 더 구체적인 식단 예시를 준비해 드릴게요.
                     </p>
                     <div className="flex gap-3">
-                        <button className="flex-1 py-3 px-4 rounded-xl bg-amber-50 text-amber-600 font-bold text-[13px] hover:bg-amber-100 transition-colors">체중 감량</button>
-                        <button className="flex-1 py-3 px-4 rounded-xl bg-blue-50 text-blue-600 font-bold text-[13px] hover:bg-blue-100 transition-colors">근육 성장</button>
+                        <button onClick={() => handleSetGoal('체중 감량')} className="flex-1 py-3 px-4 rounded-xl bg-amber-50 text-amber-600 font-bold text-[13px] hover:bg-amber-100 transition-colors">체중 감량</button>
+                        <button onClick={() => handleSetGoal('근육 성장')} className="flex-1 py-3 px-4 rounded-xl bg-blue-50 text-blue-600 font-bold text-[13px] hover:bg-blue-100 transition-colors">근육 성장</button>
                     </div>
                 </section>
             </main>

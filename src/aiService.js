@@ -14,12 +14,14 @@ const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 // 레시피 추천 중 임시 이미지 삭제 (UI에서 로딩 애니메이션으로 대체)
 
-export const recommendRecipes = async (ingredients, dietMode) => {
+export const recommendRecipes = async (ingredients, dietMode, dietGoal = '') => {
     if (!genAI) {
         throw new Error("Gemini API 키가 설정되지 않았습니다.");
     }
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로 메뉴를 구성하세요.)\n` : '';
 
     // 시스템 프롬프트 작성
     const prompt = `
@@ -27,6 +29,7 @@ export const recommendRecipes = async (ingredients, dietMode) => {
 중요: 모든 추천 레시피는 무조건 **2인분 기준**이어야 합니다.
 중요: 식재료가 제한적이더라도, 반드시 [식단 목적]의 성격(예: '든든 한끼'면 포만감이 큰 요리, '간단식'이면 빠르고 가벼운 요리, '술안주'면 짭짤하고 매콤한 요리 등)을 극대화하여 독창적인 레시피를 제안하세요. 식단 목적이 다르면 추천 결과도 확실히 달라야 합니다.
 
+${goalText}
 식재료: ${ingredients.join(', ')}
 식단 목적: ${dietMode}
 
@@ -38,7 +41,11 @@ export const recommendRecipes = async (ingredients, dietMode) => {
   {
     "id": 1,
     "title": "요리 이름",
-    "desc": "요리에 대한 짧은 설명 및 매력 포인트 (50자 내외)"
+    "desc": "요리에 대한 짧은 설명 및 매력 포인트 (50자 내외)",
+    "calories": "320kcal",
+    "carbs": "15g",
+    "protein": "35g",
+    "fat": "10g"
   }
 ]
 `;
@@ -156,18 +163,21 @@ export const checkInfographicStatus = async (recipeTitle, recipeDetail) => {
     }
 };
 
-export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode) => {
+export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode, dietGoal = '') => {
     if (!genAI) {
         throw new Error("Gemini API 키가 설정되지 않았습니다.");
     }
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
+    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로 구성하며, nutrition 영양 정보 또한 이 목표 비율에 완벽히 부합하도록 수치를 설정하세요.)\n` : '';
+
     // 시스템 프롬프트 작성
     const prompt = `
 당신은 최고의 요리사입니다. 사용자가 선택한 요리 이름과 식재료, 식단 목적을 기반으로 상세 레시피와 영양 정보를 생성해주세요.
 중요!!!: 이 레시피의 요리법, 계량, 영양 정보 등 모든 기준은 반드시 **2인분 기준**이어야 합니다. 각 재료와 소스의 양(예: '100g', '2큰술' 등)을 정확히 2인분에 맞게 명시하세요.
 
+${goalText}
 요리 이름: ${recipeTitle} (2인분 기준)
 활용 가능 식재료: ${ingredients.join(', ')}
 식단 목적: ${dietMode}

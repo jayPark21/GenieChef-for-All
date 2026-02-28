@@ -1,0 +1,23 @@
+{
+    "name": "냉장고 속 레시피 - GenieChef",
+    "short_name": "GenieChef",
+    "description": "상단 식재료로 만드는 마법 같은 맞춤 식단 추천",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "/pwa-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/pwa-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

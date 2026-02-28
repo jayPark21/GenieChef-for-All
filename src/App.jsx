@@ -6,19 +6,25 @@ import Refrigerator from './pages/Refrigerator';
 import ShoppingList from './pages/ShoppingList';
 import NutritionGuide from './pages/NutritionGuide';
 import History from './pages/History';
+import Login from './pages/Login';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/recipe" element={<Recipe />} />
-        <Route path="/refrigerator" element={<Refrigerator />} />
-        <Route path="/shopping-list" element={<ShoppingList />} />
-        <Route path="/guide" element={<NutritionGuide />} />
-        <Route path="/history" element={<History />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+          <Route path="/recipe" element={<PrivateRoute><Recipe /></PrivateRoute>} />
+          <Route path="/refrigerator" element={<PrivateRoute><Refrigerator /></PrivateRoute>} />
+          <Route path="/shopping-list" element={<PrivateRoute><ShoppingList /></PrivateRoute>} />
+          <Route path="/guide" element={<PrivateRoute><NutritionGuide /></PrivateRoute>} />
+          <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

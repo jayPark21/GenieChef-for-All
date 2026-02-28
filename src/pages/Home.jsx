@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { recommendRecipes, generateRecipeImage } from '../aiService';
 import { initialIngredients } from '../data/ingredients';
+import { useAuth } from '../contexts/AuthContext';
 
 const dietModes = [
   { id: '든든 한끼', icon: 'set_meal', color: 'text-primary' },
@@ -15,6 +16,7 @@ const dietModes = [
 const Home = () => {
   const navigate = useNavigate();
   const [dietMode, setDietMode] = useState('든든 한끼');
+  const [dietGoal, setDietGoal] = useState(() => localStorage.getItem('dietGoal') || '');
   const [ownedIngredients, setOwnedIngredients] = useState([]);
   const [customIngredients, setCustomIngredients] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
@@ -24,9 +26,10 @@ const Home = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const skipSaveRef = useRef(true);
+  const { currentUser } = useAuth();
 
-  // Firestore 사용자 문서 참조 (현재 로그인이 없으므로 guest_user 하드코딩)
-  const userRef = doc(db, 'users', 'guest_user');
+  // Firestore 사용자 문서 참조
+  const userRef = doc(db, 'users', currentUser?.uid || 'guest_user');
 
   // 첫 마운트 시 Firestore에서 데이터 불러오기
   useEffect(() => {
@@ -40,6 +43,7 @@ const Home = () => {
         if (cachedStr) {
           const data = JSON.parse(cachedStr);
           if (data.dietMode) setDietMode(data.dietMode);
+          if (data.dietGoal) setDietGoal(data.dietGoal);
 
           let currentOwned = initialIngredients.map(item => item.id);
           if (data.ownedIngredients) currentOwned = data.ownedIngredients;
@@ -68,6 +72,7 @@ const Home = () => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             if (data.dietMode) setDietMode(data.dietMode);
+            if (data.dietGoal) setDietGoal(data.dietGoal);
 
             let currentOwned = initialIngredients.map(item => item.id);
             if (data.ownedIngredients) currentOwned = data.ownedIngredients;
@@ -130,6 +135,7 @@ const Home = () => {
       const newData = {
         ...cachedData,
         dietMode,
+        dietGoal,
         selectedIngredients,
         ownedIngredients,
         customIngredients,
@@ -141,6 +147,7 @@ const Home = () => {
       try {
         await setDoc(userRef, {
           dietMode,
+          dietGoal,
           selectedIngredients,
           ownedIngredients,
           customIngredients,
@@ -155,7 +162,7 @@ const Home = () => {
       }
     };
     saveData();
-  }, [dietMode, selectedIngredients, ownedIngredients, customIngredients, isInitializing]);
+  }, [dietMode, dietGoal, selectedIngredients, ownedIngredients, customIngredients, isInitializing]);
 
   const toggleIngredient = (id) => {
     setSelectedIngredients(prev =>
@@ -172,6 +179,7 @@ const Home = () => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (data.dietMode) setDietMode(data.dietMode);
+        if (data.dietGoal) setDietGoal(data.dietGoal);
 
         let currentOwned = initialIngredients.map(item => item.id);
         if (data.ownedIngredients) currentOwned = data.ownedIngredients;
@@ -211,7 +219,7 @@ const Home = () => {
         id => allIngredients.find(item => item.id === id)?.name
       ).filter(Boolean);
 
-      const recipes = await recommendRecipes(ingredientNames, dietMode);
+      const recipes = await recommendRecipes(ingredientNames, dietMode, dietGoal);
       setRecommendations(recipes);
 
       // [땡칠이 팀장 스마트 로딩] 텍스트가 뜨면 메뉴별 사진은 백그라운드에서 실시간 생성합니다! ⚡️
@@ -289,7 +297,7 @@ const Home = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">restaurant_menu</span>
-              어떤 식단을 목표로 하시나요?
+              어떤 스타일의 식사를 원하시나요?
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -311,9 +319,9 @@ const Home = () => {
               </button>
             ))}
           </div>
-          <button onClick={() => navigate('/guide')} className="w-full py-3 rounded-2xl bg-blue-50 text-blue-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
-            <span className="material-symbols-outlined text-lg">lightbulb</span>
-            나에게 맞는 최적의 탄단지 비율 찾기
+          <button onClick={() => navigate('/guide')} className={`w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors ${dietGoal ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+            <span className="material-symbols-outlined text-lg">{dietGoal ? 'flag' : 'lightbulb'}</span>
+            {dietGoal ? `현재 목표: ${dietGoal} (변경하기)` : '나에게 맞는 최적의 탄단지 비율 찾기'}
           </button>
         </section>
 
@@ -412,9 +420,21 @@ const Home = () => {
                           <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
                         )}
                       </div>
-                      <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
+                      <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed mb-1.5">
                         {meal.desc}
                       </p>
+                      {meal.calories && (
+                        <div className="flex items-center gap-2 mt-auto">
+                          <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">{meal.calories}</span>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                            <span className="font-medium text-slate-600">탄</span> {meal.carbs}
+                            <span className="w-0.5 h-2 bg-slate-200"></span>
+                            <span className="font-medium text-blue-600">단</span> {meal.protein}
+                            <span className="w-0.5 h-2 bg-slate-200"></span>
+                            <span className="font-medium text-rose-500">지</span> {meal.fat}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -439,7 +459,8 @@ const Home = () => {
                 state: {
                   recipe: selectedRecipe,
                   ingredients: ingredientNames,
-                  dietMode
+                  dietMode,
+                  dietGoal
                 }
               });
             }
