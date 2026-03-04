@@ -10,7 +10,20 @@ const NutritionGuide = () => {
 
     const handleSetGoal = async (goal) => {
         try {
+            // 1. dietGoal 단독 키 저장
             localStorage.setItem('dietGoal', goal);
+
+            // 2. geniechef_user_data 캐시도 함께 업데이트 → 홈 화면에 즉시 반영
+            const cachedStr = localStorage.getItem('geniechef_user_data');
+            if (cachedStr) {
+                try {
+                    const cached = JSON.parse(cachedStr);
+                    cached.dietGoal = goal;
+                    localStorage.setItem('geniechef_user_data', JSON.stringify(cached));
+                } catch (_) { /* 캐시 파싱 실패 시 무시 */ }
+            }
+
+            // 3. Firebase 동기화
             if (currentUser) {
                 await setDoc(doc(db, 'users', currentUser.uid), { dietGoal: goal }, { merge: true });
             }
@@ -178,9 +191,10 @@ const NutritionGuide = () => {
                     <p className="text-[12px] text-slate-500 leading-relaxed mb-6">
                         현재 체중 감량이 목적이신가요, 아니면 근육량 증가가 목적이신가요? 목적에 맞춰 더 구체적인 식단 예시를 준비해 드릴게요.
                     </p>
-                    <div className="flex gap-3">
-                        <button onClick={() => handleSetGoal('체중 감량')} className="flex-1 py-3 px-4 rounded-xl bg-amber-50 text-amber-600 font-bold text-[13px] hover:bg-amber-100 transition-colors">체중 감량</button>
-                        <button onClick={() => handleSetGoal('근육 성장')} className="flex-1 py-3 px-4 rounded-xl bg-blue-50 text-blue-600 font-bold text-[13px] hover:bg-blue-100 transition-colors">근육 성장</button>
+                    <div className="grid grid-cols-3 gap-3">
+                        <button onClick={() => handleSetGoal('체중 감량')} className="py-3 px-2 rounded-xl bg-amber-50 text-amber-600 font-bold text-[13px] hover:bg-amber-100 transition-colors">체중 감량</button>
+                        <button onClick={() => handleSetGoal('체중 유지')} className="py-3 px-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-[13px] hover:bg-emerald-100 transition-colors">체중 유지</button>
+                        <button onClick={() => handleSetGoal('근육 성장')} className="py-3 px-2 rounded-xl bg-blue-50 text-blue-600 font-bold text-[13px] hover:bg-blue-100 transition-colors">근육 성장</button>
                     </div>
                 </section>
             </main>

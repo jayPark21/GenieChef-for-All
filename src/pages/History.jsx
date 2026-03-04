@@ -11,6 +11,8 @@ const History = () => {
     const [historyList, setHistoryList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedHistory, setSelectedHistory] = useState(null);
+    const [isImageExpanded, setIsImageExpanded] = useState(false);
+    const [lastTap, setLastTap] = useState(0);
     const { currentUser } = useAuth();
 
     // 로그인이 구현되지 않았으므로 임시로 하드코딩된 guest_user 아이디를 사용
@@ -50,6 +52,17 @@ const History = () => {
 
     const closeDetail = () => {
         setSelectedHistory(null);
+        setIsImageExpanded(false);
+    };
+
+    const handleImageClick = () => {
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 300;
+        if (lastTap && (now - lastTap) < DOUBLE_TAP_DELAY) {
+            setIsImageExpanded(true);
+        } else {
+            setLastTap(now);
+        }
     };
 
     const formatDate = (timestamp) => {
@@ -131,6 +144,10 @@ const History = () => {
                         <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
                         <p className="text-[10px] font-bold">히스토리</p>
                     </button>
+                    <button onClick={() => navigate('/nutrient-converter')} className="flex flex-col items-center gap-1 text-slate-400">
+                        <span className="material-symbols-outlined">calculate</span>
+                        <p className="text-[10px] font-medium">영양소환산</p>
+                    </button>
                 </div>
             </nav>
 
@@ -157,7 +174,8 @@ const History = () => {
                                 <img
                                     src={selectedHistory.imageUrl}
                                     alt={selectedHistory.title}
-                                    className="w-full h-auto rounded-xl shadow-md"
+                                    onClick={handleImageClick}
+                                    className="w-full h-auto rounded-xl shadow-md cursor-pointer active:scale-[0.98] transition-transform"
                                 />
                             ) : (
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -165,6 +183,32 @@ const History = () => {
                                 </ReactMarkdown>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 이미지 전체보기 모달 */}
+            {isImageExpanded && selectedHistory?.imageUrl && (
+                <div
+                    className="fixed inset-0 z-[100] bg-slate-900 overflow-y-auto cursor-zoom-out flex flex-col items-center"
+                    onClick={() => setIsImageExpanded(false)}
+                >
+                    <button
+                        className="fixed top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition-colors z-[110]"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsImageExpanded(false);
+                        }}
+                    >
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                    <div className="w-full min-h-full flex items-start justify-center p-0">
+                        <img
+                            src={selectedHistory.imageUrl}
+                            alt={selectedHistory.title}
+                            className="w-full h-auto animate-zoom-in"
+                            onClick={(e) => e.stopPropagation()}
+                        />
                     </div>
                 </div>
             )}

@@ -292,6 +292,10 @@ const ShoppingList = () => {
                         <span className="material-symbols-outlined">history</span>
                         <p className="text-[10px] font-medium">히스토리</p>
                     </button>
+                    <button onClick={() => navigate('/nutrient-converter')} className="flex flex-col items-center gap-1 text-slate-400">
+                        <span className="material-symbols-outlined">calculate</span>
+                        <p className="text-[10px] font-medium">영양소환산</p>
+                    </button>
                 </div>
             </nav>
             {/* 특별식 재료 추가 Bottom Sheet */}

@@ -21,7 +21,7 @@ export const recommendRecipes = async (ingredients, dietMode, dietGoal = '') => 
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로 메뉴를 구성하세요.)\n` : '';
+    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로, '체중 유지'인 경우 탄단지 비율이 균형 잡힌 메뉴로 구성하세요.)\n` : '';
 
     // 시스템 프롬프트 작성
     const prompt = `
@@ -170,7 +170,7 @@ export const generateRecipeDetail = async (recipeTitle, ingredients, dietMode, d
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로 구성하며, nutrition 영양 정보 또한 이 목표 비율에 완벽히 부합하도록 수치를 설정하세요.)\n` : '';
+    const goalText = dietGoal ? `**다이어트 특별 목표**: [${dietGoal}]\n(주의: '체중 감량'인 경우 저칼로리/고단백 위주로, '근육 성장'인 경우 고단백/양질의 탄수화물 위주로, '체중 유지'인 경우 탄단지 비율이 균형 잡힌(예: 5:2:3) 메뉴로 구성하며, nutrition 영양 정보 또한 이 목표 비율에 완벽히 부합하도록 수치를 설정하세요.)\n` : '';
 
     // 시스템 프롬프트 작성
     const prompt = `
@@ -220,5 +220,42 @@ JSON 구조는 다음과 같아야 합니다:
     } catch (error) {
         console.error("AI 상세 레시피 생성 실패:", error);
         throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
+    }
+};
+export const getNutrientInfo = async (ingredient, amount) => {
+    if (!genAI) {
+        throw new Error("Gemini API 키가 설정되지 않았습니다.");
+    }
+
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const prompt = `
+당신은 최고의 영양사입니다. 입력된 식재료와 중량을 바탕으로 정확한 영양 성분(탄수화물, 단백질, 지방)을 계산해 주세요.
+식재료: ${ingredient}
+중량: ${amount}g(ml)
+
+응답은 항상 순수 JSON 형식으로만 반환해야 하며, 마크다운은 포함하지 마세요.
+반드시 숫자값만 포함하고 단위(g)는 제외한 숫자값만 키값에 넣어주세요.
+
+JSON 구조:
+{
+  "ingredient": "${ingredient}",
+  "amount": ${amount},
+  "carbs": 0.0,
+  "protein": 0.0,
+  "fat": 0.0,
+  "calories": 0.0,
+  "unit": "g"
+}
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanedText);
+    } catch (error) {
+        console.error("AI 영양 정보 조회 실패:", error);
+        throw new Error("영양 정보를 가져오는 중 오류가 발생했습니다.");
     }
 };

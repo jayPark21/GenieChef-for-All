@@ -7,6 +7,7 @@ import ShoppingList from './pages/ShoppingList';
 import NutritionGuide from './pages/NutritionGuide';
 import History from './pages/History';
 import Login from './pages/Login';
+import NutrientConverter from './pages/NutrientConverter';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/shopping-list" element={<PrivateRoute><ShoppingList /></PrivateRoute>} />
           <Route path="/guide" element={<PrivateRoute><NutritionGuide /></PrivateRoute>} />
           <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
+          <Route path="/nutrient-converter" element={<PrivateRoute><NutrientConverter /></PrivateRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
