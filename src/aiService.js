@@ -222,6 +222,62 @@ JSON 구조는 다음과 같아야 합니다:
         throw new Error("상세 레시피를 생성하는 중 오류가 발생했습니다.");
     }
 };
+/**
+ * [주문식단 기능] 요리명과 냉장고 재료를 대조하여 필요/부족 재료를 분석합니다.
+ * @param {string} dishName - 사용자가 주문한 요리 이름 (예: '알리올리오 파스타')
+ * @param {string[]} ownedIngredients - 냉장고에 있는 식재료 이름 목록
+ * @returns {{ available: string[], missing: string[], recipe: object }} - 분석 결과
+ */
+export const analyzeCustomOrder = async (dishName, ownedIngredients) => {
+    if (!genAI) {
+        throw new Error("Gemini API 키가 설정되지 않았습니다.");
+    }
+
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const prompt = `
+당신은 최고의 요리사입니다. 사용자가 "${dishName}" 요리를 만들고 싶다고 합니다.
+현재 냉장고에 있는 식재료: ${ownedIngredients.join(', ')}
+
+다음 작업을 수행해주세요:
+1. "${dishName}" 요리에 필요한 핵심 재료 목록을 파악합니다.
+2. 냉장고 식재료 중 사용 가능한 것(available)을 찾습니다. (유사어/대체재 인정 가능, 예: '다진마늘' = '마늘')
+3. 냉장고에 없어서 구매해야 하는 재료(missing)를 찾습니다.
+4. 있는 재료와 없는 재료를 활용하여 최적의 2인분 레시피 정보를 제공합니다.
+
+응답은 반드시 순수 JSON 형식으로만 반환하세요. 마크다운 없이.
+
+JSON 구조:
+{
+  "dishName": "${dishName}",
+  "available": ["냉장고에 있는 재료1", "냉장고에 있는 재료2"],
+  "missing": [
+    { "name": "없는재료명", "category": "냉장|냉동|양념 및 소스|상온", "reason": "왜 필요한지 한 줄 설명" }
+  ],
+  "canCook": true,
+  "canCookNote": "냉장고 재료만으로 가능한지 여부 한줄 설명 (없는 재료가 없거나 대체 가능하면 true)",
+  "recipe": {
+    "title": "${dishName}",
+    "desc": "이 레시피에 대한 50자 내외 한줄 소개",
+    "calories": "예: 520kcal",
+    "carbs": "예: 68g",
+    "protein": "예: 18g",
+    "fat": "예: 22g"
+  }
+}
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        const cleanedText = responseText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        return JSON.parse(cleanedText);
+    } catch (error) {
+        console.error("주문식단 분석 실패:", error);
+        throw new Error("주문식단 분석 중 오류가 발생했습니다.");
+    }
+};
+
 export const getNutrientInfo = async (ingredient, amount) => {
     if (!genAI) {
         throw new Error("Gemini API 키가 설정되지 않았습니다.");

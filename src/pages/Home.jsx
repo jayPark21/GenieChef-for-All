@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { recommendRecipes, generateRecipeImage } from '../aiService';
+import { recommendRecipes, generateRecipeImage, analyzeCustomOrder } from '../aiService';
 import { initialIngredients } from '../data/ingredients';
 import { useAuth } from '../contexts/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const dietModes = [
   { id: '든든 한끼', icon: 'set_meal', color: 'text-primary' },
@@ -27,6 +28,13 @@ const Home = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const skipSaveRef = useRef(true);
+
+  // [주문식단] 상태 관리
+  const [isCustomOrderOpen, setIsCustomOrderOpen] = useState(false); // 모달 열림 여부
+  const [customOrderInput, setCustomOrderInput] = useState('');       // 요리명 입력값
+  const [customOrderStep, setCustomOrderStep] = useState('input');    // 'input' | 'analyzing' | 'result'
+  const [customOrderResult, setCustomOrderResult] = useState(null);   // AI 분석 결과
+  const [customOrderError, setCustomOrderError] = useState('');
 
   // Firestore 사용자 문서 참조
   const userRef = doc(db, 'users', currentUser?.uid || 'guest_user');
@@ -209,6 +217,85 @@ const Home = () => {
     }
   };
 
+  // ===== [주문식단] 핸들러 함수들 =====
+
+  /** 요리명을 입력받아 AI에게 냉장고 식재료 대조 분석 요청 */
+  const handleCustomOrderAnalyze = async () => {
+    if (!customOrderInput.trim()) return;
+    setCustomOrderStep('analyzing');
+    setCustomOrderError('');
+
+    try {
+      // 냉장고에 있는 식재료 이름 목록
+      const ownedIngredientNames = ownedIngredients.map(
+        id => allIngredients.find(item => item.id === id)?.name
+      ).filter(Boolean);
+
+      const result = await analyzeCustomOrder(customOrderInput.trim(), ownedIngredientNames);
+      setCustomOrderResult(result);
+      setCustomOrderStep('result');
+    } catch (error) {
+      setCustomOrderError('분석 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setCustomOrderStep('input');
+    }
+  };
+
+  /** 없는 재료들을 Firestore 쇼핑리스트에 추가 후 쇼핑 화면으로 이동 */
+  const handleAddMissingToShopping = async () => {
+    if (!customOrderResult?.missing?.length) return;
+
+    const newItems = customOrderResult.missing.map(ing => ({
+      id: `custom_order_${Date.now()}_${ing.name}`,
+      name: ing.name,
+      category: ing.category || '상온',
+      amount: 1,
+      checked: false
+    }));
+
+    try {
+      // 기존 쇼핑리스트 로드 후 병합 저장
+      const docSnap = await getDoc(userRef);
+      const existingList = docSnap.exists() ? (docSnap.data().shoppingList || []) : [];
+      const mergedList = [...newItems, ...existingList];
+      await setDoc(userRef, { shoppingList: mergedList }, { merge: true });
+      // 저장 완료 후 모달 닫고 쇼핑 화면으로 이동
+      setIsCustomOrderOpen(false);
+      navigate('/shopping-list');
+    } catch (error) {
+      console.error('쇼핑리스트 저장 실패:', error);
+      alert('쇼핑리스트 저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  /** 주문식단 레시피 페이지로 이동 */
+  const handleGoToCustomRecipe = () => {
+    if (!customOrderResult) return;
+
+    const ownedIngredientNames = ownedIngredients.map(
+      id => allIngredients.find(item => item.id === id)?.name
+    ).filter(Boolean);
+
+    // 있는 재료 + 없는 재료 전체를 recipe 페이지로 전달
+    const allAvailableIngredients = [
+      ...ownedIngredientNames,
+      ...(customOrderResult.missing?.map(m => m.name) || [])
+    ];
+
+    navigate('/recipe', {
+      state: {
+        recipe: {
+          ...customOrderResult.recipe,
+          id: Date.now()
+        },
+        ingredients: allAvailableIngredients,
+        dietMode: '주문식단',
+        dietGoal
+      }
+    });
+    setIsCustomOrderOpen(false);
+  };
+
+  // ===== 일반 추천식단 핸들러 =====
   const handleRecommend = async () => {
     setIsLoading(true);
     setRecommendations(null);
@@ -323,6 +410,25 @@ const Home = () => {
               </button>
             ))}
           </div>
+
+          {/* [주문식단] 버튼 */}
+          <button
+            onClick={() => {
+              setIsCustomOrderOpen(true);
+              setCustomOrderStep('input');
+              setCustomOrderInput('');
+              setCustomOrderResult(null);
+              setCustomOrderError('');
+            }}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-all active:scale-[0.98] mb-1"
+          >
+            <span className="text-2xl">🍽️</span>
+            <div className="text-left">
+              <p className="font-bold text-sm text-violet-800">주문식단</p>
+              <p className="text-[11px] text-violet-500 font-medium">먹고 싶은 요리 직접 주문하기</p>
+            </div>
+            <span className="material-symbols-outlined text-violet-400 ml-auto">arrow_forward_ios</span>
+          </button>
           <button onClick={() => navigate('/guide')} className={`w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors ${dietGoal ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
             <span className="material-symbols-outlined text-lg">{dietGoal ? 'flag' : 'lightbulb'}</span>
             {dietGoal ? `현재 목표: ${dietGoal} (변경하기)` : '나에게 맞는 최적의 탄단지 비율 찾기'}
@@ -483,6 +589,240 @@ const Home = () => {
           레시피 바로보기
         </button>
       </div>
+
+      {/* ===== 주문식단 모달 ===== */}
+      <AnimatePresence>
+        {isCustomOrderOpen && (
+          <>
+            {/* 딤 배경 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCustomOrderOpen(false)}
+              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+            />
+            {/* 바텀 시트 */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              className="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-[60] shadow-2xl flex flex-col"
+              style={{ maxHeight: '90vh' }}
+            >
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-2xl bg-violet-100 flex items-center justify-center text-xl">🍽️</div>
+                  <div>
+                    <h3 className="font-black text-slate-900 text-base">주문식단</h3>
+                    <p className="text-xs text-slate-400 font-medium">냉장고 재료로 원하는 요리 만들기</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsCustomOrderOpen(false)} className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+
+              {/* 컨텐츠: step별 렌더링 */}
+              <div className="overflow-y-auto flex-1">
+
+                {/* STEP 1: 요리명 입력 */}
+                {customOrderStep === 'input' && (
+                  <div className="px-6 py-6 space-y-4">
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      먹고 싶은 요리 이름을 입력하면, 지니 쉪이 <strong>냉장고 재료</strong>를 대조하여
+                      있는 재료와 필요한 재료를 알려드립니다!
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={customOrderInput}
+                        onChange={e => setCustomOrderInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && customOrderInput.trim() && handleCustomOrderAnalyze()}
+                        placeholder="예: 알리올리오 파스타, 된장찌개..."
+                        className="flex-1 h-14 px-4 rounded-2xl border-2 border-violet-200 bg-violet-50 text-slate-900 font-bold text-sm outline-none focus:border-violet-400 placeholder:text-slate-400 placeholder:font-normal"
+                        autoFocus
+                      />
+                    </div>
+                    {/* 추천 예시 태그 */}
+                    <div className="flex flex-wrap gap-2">
+                      {['알리올리오 파스타', '계란볶음밥', '된장찌개', '김치찌개', '오므라이스'].map(ex => (
+                        <button
+                          key={ex}
+                          onClick={() => setCustomOrderInput(ex)}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700 transition-colors"
+                        >
+                          {ex}
+                        </button>
+                      ))}
+                    </div>
+                    {customOrderError && (
+                      <p className="text-red-500 text-xs font-bold">{customOrderError}</p>
+                    )}
+                    <button
+                      onClick={handleCustomOrderAnalyze}
+                      disabled={!customOrderInput.trim()}
+                      className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all ${customOrderInput.trim()
+                        ? 'bg-violet-600 text-white shadow-lg shadow-violet-200 active:scale-95'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                    >
+                      <span className="material-symbols-outlined">search</span>
+                      냉장고 재료 확인하기
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2: 분석 중 */}
+                {customOrderStep === 'analyzing' && (
+                  <div className="px-6 py-16 flex flex-col items-center justify-center gap-6">
+                    <div className="relative size-20">
+                      <div className="size-full rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center text-3xl">🔍</div>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-black text-slate-800 text-lg">냉장고 분석 중...</p>
+                      <p className="text-slate-400 text-sm font-medium mt-1">지니 쉪이 '{customOrderInput}' 재료를 확인하고 있어요!</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3: 분석 결과 */}
+                {customOrderStep === 'result' && customOrderResult && (
+                  <div className="px-6 py-5 space-y-5">
+                    {/* 요리명 타이틀 */}
+                    <div className="flex items-center gap-3 bg-violet-50 rounded-2xl p-4 border border-violet-100">
+                      <span className="text-3xl">🍳</span>
+                      <div>
+                        <h4 className="font-black text-violet-900 text-base">{customOrderResult.dishName}</h4>
+                        <p className="text-xs text-violet-600 font-medium mt-0.5">{customOrderResult.recipe?.desc}</p>
+                      </div>
+                    </div>
+
+                    {/* 칼로리 정보 */}
+                    {customOrderResult.recipe?.calories && (
+                      <div className="flex gap-3">
+                        {[{ label: '칼로리', val: customOrderResult.recipe.calories, color: 'bg-rose-50 text-rose-600 border-rose-100' },
+                        { label: '탄', val: customOrderResult.recipe.carbs, color: 'bg-amber-50 text-amber-600 border-amber-100' },
+                        { label: '단', val: customOrderResult.recipe.protein, color: 'bg-blue-50 text-blue-600 border-blue-100' },
+                        { label: '지', val: customOrderResult.recipe.fat, color: 'bg-slate-50 text-slate-600 border-slate-100' },
+                        ].map(item => (
+                          <div key={item.label} className={`flex-1 flex flex-col items-center py-2 rounded-xl border text-center ${item.color}`}>
+                            <span className="text-[10px] font-black uppercase">{item.label}</span>
+                            <span className="text-xs font-black mt-0.5">{item.val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 가능 여부 배지 */}
+                    <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold ${customOrderResult.canCook
+                      ? 'bg-green-50 text-green-700 border border-green-100'
+                      : 'bg-amber-50 text-amber-700 border border-amber-100'
+                      }`}>
+                      <span className="material-symbols-outlined text-base">
+                        {customOrderResult.canCook ? 'check_circle' : 'warning'}
+                      </span>
+                      {customOrderResult.canCookNote}
+                    </div>
+
+                    {/* 냉장고에 있는 재료 */}
+                    {customOrderResult.available?.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-green-600 uppercase tracking-widest mb-2 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          냉장고에 있어요 ({customOrderResult.available.length})
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {customOrderResult.available.map((ing, i) => (
+                            <span key={i} className="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-100">
+                              ✅ {ing}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 없는 재료 → 코멘트 */}
+                    {customOrderResult.missing?.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">shopping_cart</span>
+                          구매 필요 ({customOrderResult.missing.length})
+                        </p>
+                        <div className="space-y-2">
+                          {customOrderResult.missing.map((ing, i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-100">
+                              <span className="material-symbols-outlined text-rose-400 text-sm">remove_shopping_cart</span>
+                              <div className="flex-1">
+                                <p className="text-sm font-bold text-rose-800">{ing.name}</p>
+                                <p className="text-[11px] text-rose-400 font-medium">{ing.reason}</p>
+                              </div>
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">{ing.category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 다른 요리 주문하기 */}
+                    <button
+                      onClick={() => { setCustomOrderStep('input'); setCustomOrderInput(''); }}
+                      className="w-full py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    >
+                      <span className="material-symbols-outlined text-sm">refresh</span>
+                      다른 요리 주문하기
+                    </button>
+
+                    {/* 필요 재료 쪽쯵 유무에 따린 옵션 버튼들 */}
+                    {customOrderResult.missing?.length > 0 ? (
+                      /* 부족한 재료 있음 → 2가지 옵션 */
+                      <div className="space-y-2 pt-2">
+                        <p className="text-center text-xs text-slate-400 font-bold">
+                          🛒 {customOrderResult.missing.length}가지 재료가 부족합니다. 어떻게 하시겠어요?
+                        </p>
+                        <div className="flex gap-3">
+                          {/* 옵션 1: 계속 진행 */}
+                          <button
+                            onClick={handleGoToCustomRecipe}
+                            className="flex-1 py-4 bg-green-100 text-green-700 font-black rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-sm border-2 border-green-200"
+                          >
+                            <span className="material-symbols-outlined text-base">arrow_forward</span>
+                            계속 진행
+                          </button>
+                          {/* 옵션 2: 쇼핑하기 */}
+                          <button
+                            onClick={handleAddMissingToShopping}
+                            className="flex-[1.4] py-4 bg-rose-500 text-white font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-lg shadow-rose-200 active:scale-95 transition-transform text-sm"
+                          >
+                            <span className="material-symbols-outlined text-base">shopping_cart</span>
+                            쇼핑하기
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* 모든 재료 있음 → 레시피 바로보기 단일 버튼 */
+                      <button
+                        onClick={handleGoToCustomRecipe}
+                        className="w-full py-4 bg-violet-600 text-white font-black rounded-2xl shadow-xl shadow-violet-200 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                      >
+                        <span className="material-symbols-outlined">chef_hat</span>
+                        레시피 바로보기
+                      </button>
+                    )}
+
+                    {/* 하단 패딩 (스크롤 영역 내 여백) */}
+                    <div className="h-6" />
+                  </div>
+                )}
+              </div>
+              {/* 하단 고정 영역 제거 - 온 팬에서만 마무리 */}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-6 pt-3 pb-8">
         <div className="flex items-center justify-between">
